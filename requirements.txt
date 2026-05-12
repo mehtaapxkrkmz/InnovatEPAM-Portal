@@ -4,6 +4,7 @@ motor
 pydantic
 pydantic-settings
 passlib[bcrypt]
+PyJWT
 pytest
 pytest-asyncio
 httpx
