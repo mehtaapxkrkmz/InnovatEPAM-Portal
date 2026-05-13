@@ -3,14 +3,22 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.config import get_settings
-from app.models.user import UserRole
+from app.models.user import CurrentUser, UserRole
 
-bearer_scheme = HTTPBearer()
+# auto_error=False prevents framework-level auth parsing errors from surfacing
+# as validation-style failures before we can return a clean 401 response.
+bearer_scheme = HTTPBearer(auto_error=False)
 
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
-) -> dict:
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> CurrentUser:
+    if credentials is None or not credentials.credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+        )
+
     settings = get_settings()
     token = credentials.credentials
     try:
@@ -34,12 +42,33 @@ def get_current_user(
             detail="Invalid token payload",
         )
 
-    return {"email": email, "role": role}
+    return CurrentUser(email=email, role=role)
+
+
+def get_current_user_optional(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> CurrentUser | None:
+    if credentials is None or not credentials.credentials:
+        return None
+
+    settings = get_settings()
+    token = credentials.credentials
+    try:
+        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        return None
+
+    email: str | None = payload.get("sub")
+    role: str | None = payload.get("role")
+    if not email or not role:
+        return None
+
+    return CurrentUser(email=email, role=role)
 
 
 def require_role(*roles: UserRole):
-    def _guard(current_user: dict = Depends(get_current_user)) -> dict:
-        if current_user.get("role") not in [r.value for r in roles]:
+    def _guard(current_user: CurrentUser = Depends(get_current_user)) -> CurrentUser:
+        if current_user.role not in roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions",

@@ -14,6 +14,7 @@
 - [x] Completed basic idea submission form via POST /ideas/submit with JWT authentication and MongoDB persistence.
 - [x] Completed idea listing and viewing via GET /ideas for authenticated users.
 - [x] Completed single file attachment support with multipart upload validation and static hosting.
+- [x] Completed Global API Documentation with standardized Swagger success and failure examples across all endpoints.
 
 ## Next Steps (Tomorrow)
 - [ ] Implement logout endpoint and token revocation storage flow.

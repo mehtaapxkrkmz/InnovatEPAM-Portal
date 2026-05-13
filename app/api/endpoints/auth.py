@@ -1,19 +1,87 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from pydantic import BaseModel, EmailStr, Field
 
 from app.db.client import get_database
 from app.db.repositories.user_repository import UserRepository
+from app.models.auth import LoginRequest
 from app.models.token import Token
 from app.models.user import UserCreate, UserRead
 from app.services.auth_service import AuthService
 
 router = APIRouter()
 
+REGISTER_RESPONSES = {
+    201: {
+        "description": "Succeed Request Example",
+        "content": {
+            "application/json": {
+                "example": {
+                    "id": "user-1",
+                    "email": "jane.doe@epam.com",
+                    "full_name": "Jane Doe",
+                    "role": "submitter",
+                    "created_at": "2026-05-13T09:00:00Z",
+                    "is_active": True,
+                }
+            }
+        },
+    },
+    400: {
+        "description": "Failed Request Example",
+        "content": {
+            "application/json": {
+                "example": {
+                    "detail": "Invalid registration payload",
+                }
+            }
+        },
+    },
+    409: {
+        "description": "Failed Request Example",
+        "content": {
+            "application/json": {
+                "example": {
+                    "detail": "User with this email already exists",
+                }
+            }
+        },
+    },
+}
 
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str = Field(min_length=1)
+LOGIN_RESPONSES = {
+    200: {
+        "description": "Succeed Request Example",
+        "content": {
+            "application/json": {
+                "example": {
+                    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.access-token",
+                    "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh-token",
+                    "token_type": "bearer",
+                }
+            }
+        },
+    },
+    400: {
+        "description": "Failed Request Example",
+        "content": {
+            "application/json": {
+                "example": {
+                    "detail": "Validation failed",
+                }
+            }
+        },
+    },
+    401: {
+        "description": "Failed Request Example",
+        "content": {
+            "application/json": {
+                "example": {
+                    "detail": "Invalid credentials",
+                }
+            }
+        },
+    },
+}
 
 
 def get_auth_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> AuthService:
@@ -25,6 +93,7 @@ def get_auth_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> AuthSe
     response_model=UserRead,
     status_code=status.HTTP_201_CREATED,
     summary="Register a new user",
+    responses=REGISTER_RESPONSES,
 )
 async def register_user(
     payload: UserCreate,
@@ -36,7 +105,7 @@ async def register_user(
         message = str(exc)
         if "already exists" in message:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=message) from exc
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message) from exc
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message) from exc
 
 
 @router.post(
@@ -44,6 +113,7 @@ async def register_user(
     response_model=Token,
     status_code=status.HTTP_200_OK,
     summary="Authenticate a user and return tokens",
+    responses=LOGIN_RESPONSES,
 )
 async def login_user(
     payload: LoginRequest,
