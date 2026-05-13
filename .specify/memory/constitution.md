@@ -63,9 +63,11 @@ Rationale: Persistent context is required for reliable AI-native engineering wor
 
 - Requirements hierarchy is mandatory: PRD -> Epic -> Story.
 - Development artifacts MUST remain source-of-truth aligned with:
-	- docs/memory-bank/projectBrief.md
-	- docs/memos/engineering_standards.md
-	- specs/adrs/ADR-001-tech-stack.md
+	- specs/003-phase1-mvp-canonical/spec.md
+	- specs/003-phase1-mvp-canonical/plan.md
+	- docs/adrs/ADR-001-data-persistence.md
+	- docs/adrs/ADR-002-authentication.md
+	- docs/adrs/ADR-003-testing.md
 - Data contracts MUST be represented via explicit Pydantic schemas.
 - Database operations MUST target MongoDB Atlas-compatible patterns.
 
