@@ -5,6 +5,7 @@ from urllib.parse import urlparse
 from fastapi import FastAPI
 
 from app.api.endpoints.auth import router as auth_router
+from app.api.endpoints.ideas import router as ideas_router
 from app.core.config import get_settings
 from app.db.client import mongo_manager
 
@@ -32,6 +33,7 @@ async def lifespan(app: FastAPI):
 settings = get_settings()
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
+app.include_router(ideas_router, prefix="/ideas", tags=["ideas"])
 
 
 @app.get("/health", tags=["system"])
