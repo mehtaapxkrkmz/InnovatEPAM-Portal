@@ -44,3 +44,37 @@ async def test_register_user_success() -> None:
     assert "id" in data
     assert "password" not in data
     assert "password_hash" not in data
+
+
+@pytest.mark.asyncio
+async def test_logout_user_success() -> None:
+    """POST /auth/logout with a valid Bearer token returns 200 and success message."""
+    from app.core.deps import get_current_user
+    from app.models.user import CurrentUser
+
+    app.dependency_overrides[get_current_user] = lambda: CurrentUser(
+        email="test.user@example.com", role=UserRole.SUBMITTER
+    )
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as client:
+        response = await client.post("/auth/logout")
+
+    app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json() == {"message": "Logged out successfully"}
+
+
+@pytest.mark.asyncio
+async def test_logout_user_unauthenticated_returns_401() -> None:
+    """POST /auth/logout without an Authorization header returns 401."""
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as client:
+        response = await client.post("/auth/logout")
+
+    assert response.status_code == 401

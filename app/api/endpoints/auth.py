@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
+from app.core.deps import get_current_user
 from app.db.client import get_database
 from app.db.repositories.user_repository import UserRepository
 from app.models.auth import LoginRequest
 from app.models.token import Token
-from app.models.user import UserCreate, UserRead
+from app.models.user import CurrentUser, UserCreate, UserRead
 from app.services.auth_service import AuthService
 
 router = APIRouter()
@@ -84,6 +85,26 @@ LOGIN_RESPONSES = {
 }
 
 
+LOGOUT_RESPONSES = {
+    200: {
+        "description": "Logged out successfully",
+        "content": {
+            "application/json": {
+                "example": {"message": "Logged out successfully"}
+            }
+        },
+    },
+    401: {
+        "description": "Not authenticated",
+        "content": {
+            "application/json": {
+                "example": {"detail": "Not authenticated"}
+            }
+        },
+    },
+}
+
+
 def get_auth_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> AuthService:
     return AuthService(user_repository=UserRepository(db))
 
@@ -133,3 +154,17 @@ async def login_user(
         refresh_token=auth_service.create_refresh_token(claims),
         token_type="bearer",
     )
+
+
+@router.post(
+    "/logout",
+    status_code=status.HTTP_200_OK,
+    summary="Logout the current user",
+    responses=LOGOUT_RESPONSES,
+)
+async def logout_user(
+    current_user: CurrentUser = Depends(get_current_user),
+) -> dict:
+    # Stateless JWT: the access token remains valid until expiry.
+    # The client is responsible for discarding both tokens on receipt of 200.
+    return {"message": "Logged out successfully"}

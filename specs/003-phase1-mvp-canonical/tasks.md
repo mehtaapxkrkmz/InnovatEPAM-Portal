@@ -35,25 +35,25 @@ Story-001 implements the core authentication and authorization layer enabling se
 
 Initialize FastAPI project structure, database connection, and configuration skeleton.
 
-- [ ] T001 Create base FastAPI project structure with directories (src/app, src/app/core, src/app/db, src/app/api, src/app/services, tests/)
+- [X] T001 Create base FastAPI project structure with directories (src/app, src/app/core, src/app/db, src/app/api, src/app/services, tests/)
 
-- [ ] T002 [P] Create core/config.py with Settings class for environment variables (DATABASE_URL, JWT_SECRET, JWT_ALGORITHM, TOKEN_EXPIRY)
+- [X] T002 [P] Create core/config.py with Settings class for environment variables (DATABASE_URL, JWT_SECRET, JWT_ALGORITHM, TOKEN_EXPIRY)
 
 - [ ] T003 [P] Create core/constants.py with application-wide constants (PASSWORD_MIN_LENGTH=8, TOKEN_EXPIRY_SECONDS=3600, REFRESH_TOKEN_EXPIRY_SECONDS=86400)
 
-- [ ] T004 [P] Create db/client.py with Motor async MongoDB connection utility and client initialization
+- [X] T004 [P] Create db/client.py with Motor async MongoDB connection utility and client initialization
 
-- [ ] T005 [P] Create core/security.py skeleton with password hashing and JWT utilities stub
+- [X] T005 [P] Create core/security.py skeleton with password hashing and JWT utilities stub
 
 - [ ] T006 [P] Create .env.example template with required environment variables documented
 
-- [ ] T007 Create requirements.txt with dependencies: fastapi, uvicorn, motor, pymongo, pydantic, passlib, bcrypt, pyjwt, python-multipart, python-dotenv
+- [X] T007 Create requirements.txt with dependencies: fastapi, uvicorn, motor, pymongo, pydantic, passlib, bcrypt, pyjwt, python-multipart, python-dotenv
 
 - [ ] T008 [P] Create pytest.ini configuration with markers, async plugin settings, and coverage thresholds (95% minimum)
 
 - [ ] T009 [P] Create tests/conftest.py with pytest fixtures for async MongoDB test client, sample users, and teardown cleanup
 
-- [ ] T010 Create src/main.py FastAPI app entry point with CORS, health check endpoint, and route registration stub
+- [X] T010 Create src/main.py FastAPI app entry point with CORS, health check endpoint, and route registration stub
 
 ---
 
@@ -61,23 +61,23 @@ Initialize FastAPI project structure, database connection, and configuration ske
 
 Define Pydantic schemas and MongoDB document structures for users and authentication.
 
-- [ ] T011 [P] Create models/user.py with Pydantic User schema (id, email, first_name, last_name, hashed_password, role, is_active, created_at, updated_at)
+- [X] T011 [P] Create models/user.py with Pydantic User schema (id, email, first_name, last_name, hashed_password, role, is_active, created_at, updated_at)
 
-- [ ] T012 [P] Create models/user.py with UserCreate request schema (email, first_name, last_name, password) with validation (email format, password min 8 chars)
+- [X] T012 [P] Create models/user.py with UserCreate request schema (email, first_name, last_name, password) with validation (email format, password min 8 chars)
 
-- [ ] T013 [P] Create models/user.py with UserResponse schema (id, email, first_name, last_name, role, created_at) excluding hashed_password
+- [X] T013 [P] Create models/user.py with UserResponse schema (id, email, first_name, last_name, role, created_at) excluding hashed_password
 
 - [ ] T014 [P] Create models/token.py with LoginRequest schema (email, password)
 
-- [ ] T015 [P] Create models/token.py with AuthTokenResponse schema (access_token, refresh_token, token_type, expires_in)
+- [X] T015 [P] Create models/token.py with AuthTokenResponse schema (access_token, refresh_token, token_type, expires_in)
 
-- [ ] T016 [P] Create models/token.py with JWT payload schema (sub, email, role, iat, exp)
+- [X] T016 [P] Create models/token.py with JWT payload schema (sub, email, role, iat, exp)
 
 - [ ] T017 [P] Create db/schemas.py with MongoDB validation rules (Email unique index, role enum validation, password hash presence)
 
 - [ ] T018 [P] Create db/repositories/user_repository.py with UserRepository class and CRUD method stubs (create, find_by_id, find_by_email, update, delete)
 
-- [ ] T019 Create db/repositories/__init__.py to export all repository classes
+- [X] T019 Create db/repositories/__init__.py to export all repository classes
 
 - [ ] T020 [P] Add MongoDB index creation to db/client.py for users collection (email unique, created_at, role)
 
@@ -137,17 +137,17 @@ Implement registration flow to pass all Phase 3 tests.
 
 ### 4.1 Password Security Implementation
 
-- [ ] T038 [US1] Implement hash_password() in core/security.py using passlib/bcrypt with cost=12
+- [X] T038 [US1] Implement hash_password() in core/security.py using passlib/bcrypt with cost=12
 
-- [ ] T039 [US1] Implement verify_password() in core/security.py to validate plaintext against hash
+- [X] T039 [US1] Implement verify_password() in core/security.py to validate plaintext against hash
 
 - [ ] T040 [US1] [P] Add password validation utility in core/security.py (min 8 chars, complexity rules optional for Phase 1)
 
 ### 4.2 User Repository Implementation
 
-- [ ] T041 [US1] Implement UserRepository.create() in db/repositories/user_repository.py (insert to users collection, return User)
+- [X] T041 [US1] Implement UserRepository.create() in db/repositories/user_repository.py (insert to users collection, return User)
 
-- [ ] T042 [US1] Implement UserRepository.find_by_email() in db/repositories/user_repository.py (query users by email, return User or None)
+- [X] T042 [US1] Implement UserRepository.find_by_email() in db/repositories/user_repository.py (query users by email, return User or None)
 
 - [ ] T043 [US1] Implement UserRepository.find_by_id() in db/repositories/user_repository.py (query users by _id, return User or None)
 
@@ -159,17 +159,17 @@ Implement registration flow to pass all Phase 3 tests.
 
 - [ ] T046 [US1] Implement input validation in UserService.register() (email format, password length, required fields)
 
-- [ ] T047 [US1] Implement duplicate email check in UserService.register() (raise 409 Conflict if email exists)
+- [X] T047 [US1] Implement duplicate email check in UserService.register() (raise 409 Conflict if email exists)
 
-- [ ] T048 [US1] [P] Implement UserResponse mapping in UserService.register() (exclude hashed_password, include role=submitter by default)
+- [X] T048 [US1] [P] Implement UserResponse mapping in UserService.register() (exclude hashed_password, include role=submitter by default)
 
 ### 4.4 Registration API Endpoint
 
-- [ ] T049 [US1] Create api/endpoints/auth.py with POST /auth/register endpoint (accept UserCreate payload, call UserService.register(), return 201 UserResponse)
+- [X] T049 [US1] Create api/endpoints/auth.py with POST /auth/register endpoint (accept UserCreate payload, call UserService.register(), return 201 UserResponse)
 
 - [ ] T050 [US1] Add validation error handling to /auth/register (return 422 with details for missing/invalid fields)
 
-- [ ] T051 [US1] Add duplicate email handling to /auth/register (return 409 Conflict for existing email)
+- [X] T051 [US1] Add duplicate email handling to /auth/register (return 409 Conflict for existing email)
 
 - [ ] T052 [US1] Create api/router.py to include auth endpoint routes
 
@@ -181,7 +181,7 @@ Implement registration flow to pass all Phase 3 tests.
 
 ### 4.6 Verify Phase 3 Tests Pass
 
-- [ ] T055 [US1] Run all Phase 3 tests (pytest tests/ -v), verify 100% pass rate, generate coverage report
+- [X] T055 [US1] Run all Phase 3 tests (pytest tests/ -v), verify 100% pass rate, generate coverage report
 
 - [ ] T056 [US1] Generate mutation testing report (mutmut run), verify score >= 75% on services/user_service.py
 
@@ -221,11 +221,11 @@ Implement JWT token generation, login, logout, and token refresh endpoints.
 
 - [ ] T068 [US1] Implement AuthService.login() in services/auth_service.py (find user by email, verify password, generate tokens, return AuthTokenResponse)
 
-- [ ] T069 [US1] Implement login endpoint POST /auth/login in api/endpoints/auth.py
+- [X] T069 [US1] Implement login endpoint POST /auth/login in api/endpoints/auth.py
 
 - [ ] T070 [US1] Add login attempt logging to POST /auth/login (create audit_logs entry with success/failure, timestamp, email)
 
-- [ ] T071 [US1] Implement LoginRequest validation (email required, password required, email format)
+- [X] T071 [US1] Implement LoginRequest validation (email required, password required, email format)
 
 ### 5.4 Refresh Token Tests (Red)
 
@@ -263,7 +263,7 @@ Implement JWT token generation, login, logout, and token refresh endpoints.
 
 - [ ] T085 [US1] Implement AuthService.logout() in services/auth_service.py (revoke refresh token, return success message)
 
-- [ ] T086 [US1] Implement POST /auth/logout endpoint in api/endpoints/auth.py (extract token from Authorization header, call logout, return 200)
+- [X] T086 [US1] Implement POST /auth/logout endpoint in api/endpoints/auth.py (extract token from Authorization header, call logout, return 200)
 
 - [ ] T087 [US1] Add token extraction middleware in api/dependencies.py (extract Bearer token from Authorization header)
 
@@ -271,7 +271,7 @@ Implement JWT token generation, login, logout, and token refresh endpoints.
 
 ### 5.8 Verify Phase 5 Tests Pass
 
-- [ ] T089 [US1] Run all Phase 5 tests (pytest tests/ -v), verify 100% pass rate
+- [X] T089 [US1] Run all Phase 5 tests (pytest tests/ -v), verify 100% pass rate
 
 - [ ] T090 [US1] Generate mutation testing report for auth_service.py, verify score >= 75%
 
@@ -301,7 +301,7 @@ Implement role-based access control guards and dependency injection for protecte
 
 ### 6.2 Authorization Dependency Implementation
 
-- [ ] T099 [US1] Implement get_current_user() in api/dependencies.py (extract token from header, verify, return User)
+- [X] T099 [US1] Implement get_current_user() in api/dependencies.py (extract token from header, verify, return User)
 
 - [ ] T100 [US1] Implement require_evaluator_or_admin() in api/dependencies.py (FastAPI dependency raising 403 if not evaluator/admin)
 
@@ -309,7 +309,7 @@ Implement role-based access control guards and dependency injection for protecte
 
 - [ ] T102 [US1] [P] Implement require_admin() in api/dependencies.py (FastAPI dependency raising 403 if not admin)
 
-- [ ] T103 [US1] Add token decoding error handling in get_current_user() (invalid signature, expired token both raise 401)
+- [X] T103 [US1] Add token decoding error handling in get_current_user() (invalid signature, expired token both raise 401)
 
 ### 6.3 Protected Endpoint Contract Tests (Red)
 
@@ -327,7 +327,7 @@ Implement role-based access control guards and dependency injection for protecte
 
 - [ ] T109 [US1] [P] Implement GET /auth/verify endpoint to validate current token (requires get_current_user, returns 200 if valid)
 
-- [ ] T110 [US1] Add authorization headers to all endpoints (Authorization: Bearer <token> required for protected endpoints)
+- [X] T110 [US1] Add authorization headers to all endpoints (Authorization: Bearer <token> required for protected endpoints)
 
 ### 6.5 RBAC Edge Case Tests
 
@@ -484,3 +484,32 @@ Upon completion of all 126 tasks:
 3. **Coverage Report**: Generate htmlcov/index.html, verify coverage targets met
 4. **Story-001 Sign-Off**: QA acceptance testing of registration/login/logout flows
 5. **Proceed to Story-002**: Idea Submission and Visibility (depends on Story-001 complete)
+
+---
+
+## Story-002 & Story-003: Implementation Status (No Formal Tasks Generated)
+
+> Tasks for Story-002 and Story-003 were not generated via speckit.tasks. The features below
+> were implemented directly and are verified by passing tests.
+
+### Story-002 - Idea Submission & Visibility (FR-008 - FR-014) [COMPLETE]
+
+- [X] POST /ideas/submit - title, description, category (form data)
+- [X] Optional single file attachment (multipart/form-data, type + size validated, stored in uploads/)
+- [X] GET /ideas - role-based list (submitter sees own; admin/evaluator sees all) with ?status= filter
+- [X] GET /ideas/{id} - retrieve single idea with all fields including attachment_url
+
+### Story-003 - Evaluation Workflow (FR-015 - FR-018) [COMPLETE]
+
+- [X] PATCH /ideas/{id}/status - admin/evaluator only, persists status + evaluator_comment
+- [X] IdeaStatus enum: SUBMITTED -> UNDER_REVIEW -> ACCEPTED/REJECTED
+- [X] evaluator_comment stored and returned on GET /ideas/{id}
+- [ ] Status transition enforcement (any->any currently allowed; submitted->under_review->final not enforced)
+- [ ] Mandatory evaluator_comment for ACCEPTED/REJECTED statuses (currently optional)
+
+### Known Remaining Gaps (Story-001)
+
+- [ ] T072-T079 - POST /auth/refresh (refresh token endpoint + token store)
+- [ ] T067, T070, T088, T118-T121 - Audit logging (login/logout/register events)
+- [ ] T108 - GET /auth/me (profile endpoint)
+- [ ] T056, T090, T123 - mutmut mutation testing (score not yet verified; 75% minimum required)

@@ -30,12 +30,20 @@ class MockIdeaService:
             raise ValueError("Idea not found")
         return self.ideas[idea_id]
 
-    async def update_idea_status(self, idea_id: str, status: str, user_role: UserRole):
+    async def update_idea_status(
+        self,
+        idea_id: str,
+        status: str,
+        user_role: UserRole,
+        evaluator_comment: str | None = None,
+    ):
         if user_role not in [UserRole.ADMIN, UserRole.EVALUATOR]:
             raise PermissionError("Unauthorized role")
         if idea_id not in self.ideas:
             raise ValueError("Idea not found")
         self.ideas[idea_id]["status"] = status
+        if evaluator_comment is not None:
+            self.ideas[idea_id]["evaluator_comment"] = evaluator_comment
 
     async def create_idea(self, payload, current_user: CurrentUser):
         idea_id = f"idea-{len(self.ideas) + 1}"
@@ -164,6 +172,7 @@ def test_get_ideas_returns_200_and_owner_ideas_list():
             "created_by": "owner.user@epam.com",
             "created_at": "2026-01-01T00:00:00Z",
             "attachment_url": None,
+            "evaluator_comment": None,
         }
     ]
 
@@ -199,6 +208,30 @@ def test_submit_idea_with_file_returns_201_and_attachment_url():
     uploaded_file = Path(__file__).resolve().parents[2] / body["attachment_url"].lstrip("/")
     if uploaded_file.exists():
         uploaded_file.unlink()
+
+
+def test_submit_idea_allows_admin_role():
+    service = MockIdeaService()
+    app.dependency_overrides[get_current_user] = (
+        lambda: CurrentUser(email="admin@epam.com", role=UserRole.ADMIN)
+    )
+    app.dependency_overrides[get_idea_service] = lambda: service
+
+    try:
+        client = TestClient(app)
+        response = client.post(
+            "/ideas/submit",
+            data={
+                "title": "Admin Submitted Idea",
+                "description": "Admins can submit ideas while also evaluating other submissions.",
+                "category": "Process",
+            },
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 201
+    assert response.json()["created_by"] == "admin@epam.com"
 
 
 def test_get_idea_by_id_returns_correct_idea():
@@ -238,6 +271,31 @@ def test_update_idea_status_allows_admin():
     assert response.status_code == 200
     body = response.json()
     assert body["status"] == IdeaStatus.ACCEPTED.value
+
+
+def test_update_idea_status_allows_admin_with_evaluator_comment():
+    app.dependency_overrides[get_current_user] = (
+        lambda: CurrentUser(email="admin@epam.com", role=UserRole.ADMIN)
+    )
+    app.dependency_overrides[get_idea_service] = lambda: MockIdeaService()
+
+    try:
+        client = TestClient(app)
+        response = client.patch(
+            "/ideas/idea-1/status",
+            json={
+                "status": "under_review",
+                "evaluator_comment": "Great direction. Please add measurable KPIs.",
+            },
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "under_review",
+        "evaluator_comment": "Great direction. Please add measurable KPIs.",
+    }
 
 
 def test_update_idea_status_forbidden_for_submitter():

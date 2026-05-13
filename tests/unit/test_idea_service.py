@@ -24,10 +24,17 @@ class InMemoryIdeaRepo:
     async def get_by_id(self, idea_id: str) -> dict | None:
         return next((idea for idea in self._ideas if idea["_id"] == idea_id), None)
 
-    async def update_status(self, idea_id: str, status: str) -> bool:
+    async def update_status(
+        self,
+        idea_id: str,
+        status: str,
+        evaluator_comment: str | None = None,
+    ) -> bool:
         for idea in self._ideas:
             if idea["_id"] == idea_id:
                 idea["status"] = status
+                if evaluator_comment is not None:
+                    idea["evaluator_comment"] = evaluator_comment
                 return True
         return False
 
@@ -265,3 +272,34 @@ async def test_update_idea_status_forbidden_for_submitter():
 
     with pytest.raises(PermissionError):
         await service.update_idea_status("idea-1", IdeaStatus.ACCEPTED, submitter_user)
+
+
+@pytest.mark.asyncio
+async def test_update_idea_status_saves_evaluator_comment_when_provided():
+    repo = InMemoryIdeaRepo()
+    service = IdeaService(idea_repository=repo)
+
+    repo._ideas = [
+        {
+            "_id": "idea-1",
+            "title": "Owner Idea",
+            "description": "Idea created by owner user.",
+            "category": IdeaCategory.PRODUCT,
+            "status": IdeaStatus.SUBMITTED,
+            "created_by": "owner.user@epam.com",
+            "created_at": datetime.now(timezone.utc),
+        }
+    ]
+
+    await service.update_idea_status(
+        "idea-1",
+        IdeaStatus.UNDER_REVIEW,
+        UserRole.ADMIN,
+        evaluator_comment="Needs risk assessment section before final review.",
+    )
+
+    assert repo._ideas[0]["status"] == IdeaStatus.UNDER_REVIEW
+    assert (
+        repo._ideas[0]["evaluator_comment"]
+        == "Needs risk assessment section before final review."
+    )

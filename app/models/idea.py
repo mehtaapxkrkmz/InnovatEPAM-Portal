@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -47,6 +48,7 @@ class IdeaRead(BaseModel):
     created_by: str
     created_at: datetime
     attachment_url: str | None = None
+    evaluator_comment: Optional[str] = None
 
 
 class IdeaInDB(BaseModel):
@@ -60,15 +62,18 @@ class IdeaInDB(BaseModel):
     created_by: str
     created_at: datetime
     attachment_url: str | None = None
+    evaluator_comment: Optional[str] = None
 
 
 class IdeaStatusUpdate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     status: IdeaStatus
+    evaluator_comment: Optional[str] = None
 
 
 class IdeaStatusUpdateResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     status: IdeaStatus
+    evaluator_comment: Optional[str] = None

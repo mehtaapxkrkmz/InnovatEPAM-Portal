@@ -1,7 +1,7 @@
 ﻿from pathlib import Path
 from uuid import uuid4
 
-from typing import Annotated
+from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
@@ -129,16 +129,20 @@ def get_idea_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> IdeaSe
             },
         },
         401: UNAUTHORIZED_401_RESPONSE,
+        403: FORBIDDEN_403_RESPONSE,
     },
 )
 async def submit_idea(
     title: str = Form(...),
     description: str = Form(...),
     category: IdeaCategory = Form(...),
-    file: UploadFile | None = File(None),
+    file: Optional[UploadFile] = File(None),
     current_user: CurrentUser = Depends(get_current_user),
     idea_service: IdeaService = Depends(get_idea_service),
 ) -> IdeaRead:
+    if current_user.role not in [UserRole.SUBMITTER, UserRole.ADMIN, UserRole.EVALUATOR]:
+        raise HTTPException(status_code=403, detail="Unauthorized role")
+
     attachment_url: str | None = None
     if file is not None:
         if file.content_type not in ALLOWED_ATTACHMENT_TYPES:
@@ -235,6 +239,7 @@ async def get_idea_by_id(
 @router.patch(
     "/{id}/status",
     response_model=IdeaStatusUpdateResponse,
+    response_model_exclude_none=True,
     status_code=status.HTTP_200_OK,
     summary="Update an idea's status",
     responses={
@@ -243,7 +248,8 @@ async def get_idea_by_id(
             "content": {
                 "application/json": {
                     "example": {
-                        "status": "accepted",
+                        "status": "under_review",
+                        "evaluator_comment": "Looks promising. Please provide expected rollout timeline in the next revision.",
                     }
                 }
             },
@@ -273,7 +279,15 @@ async def update_idea_status(
         raise HTTPException(status_code=403, detail="Unauthorized role")
 
     try:
-        await idea_service.update_idea_status(id, payload.status.value, current_user.role)
-        return IdeaStatusUpdateResponse(status=payload.status)
+        await idea_service.update_idea_status(
+            id,
+            payload.status.value,
+            current_user.role,
+            evaluator_comment=payload.evaluator_comment,
+        )
+        return IdeaStatusUpdateResponse(
+            status=payload.status,
+            evaluator_comment=payload.evaluator_comment,
+        )
     except ValueError:
         raise HTTPException(status_code=404, detail="Idea not found")

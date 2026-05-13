@@ -35,9 +35,18 @@ class IdeaRepository:
         cursor = self.collection.find(query)
         return await cursor.to_list(length=None)
 
-    async def update_status(self, idea_id: str, status: str) -> bool:
+    async def update_status(
+        self,
+        idea_id: str,
+        status: str,
+        evaluator_comment: str | None = None,
+    ) -> bool:
+        set_fields: dict[str, str] = {"status": status}
+        if evaluator_comment is not None:
+            set_fields["evaluator_comment"] = evaluator_comment
+
         result = await self.collection.update_one(
             {"_id": idea_id},
-            {"$set": {"status": status}}
+            {"$set": set_fields}
         )
         return result.modified_count > 0
