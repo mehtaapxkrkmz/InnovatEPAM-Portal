@@ -13,6 +13,7 @@
 - [x] Achieved green unit tests: 6 passed in tests/unit/test_auth_service.py.
 - [x] Completed basic idea submission form via POST /ideas/submit with JWT authentication and MongoDB persistence.
 - [x] Completed idea listing and viewing via GET /ideas for authenticated users.
+- [x] Completed single file attachment support with multipart upload validation and static hosting.
 
 ## Next Steps (Tomorrow)
 - [ ] Implement logout endpoint and token revocation storage flow.

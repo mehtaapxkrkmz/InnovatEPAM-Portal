@@ -22,6 +22,7 @@ class IdeaCreate(BaseModel):
     title: str = Field(min_length=3, max_length=255)
     description: str = Field(min_length=10, max_length=5000)
     category: IdeaCategory
+    attachment_url: str | None = None
 
 
 class IdeaRead(BaseModel):
@@ -32,6 +33,7 @@ class IdeaRead(BaseModel):
     status: IdeaStatus = IdeaStatus.SUBMITTED
     created_by: str
     created_at: datetime
+    attachment_url: str | None = None
 
 
 class IdeaInDB(BaseModel):
@@ -42,3 +44,4 @@ class IdeaInDB(BaseModel):
     status: IdeaStatus = IdeaStatus.SUBMITTED
     created_by: str
     created_at: datetime
+    attachment_url: str | None = None
