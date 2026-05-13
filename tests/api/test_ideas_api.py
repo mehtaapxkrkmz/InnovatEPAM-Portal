@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi.testclient import TestClient
-from app.models.idea import IdeaCategory, IdeaRead, IdeaStatus
+from app.models.idea import IdeaCategory, IdeaPriority, IdeaRead, IdeaStatus
 from app.models.user import CurrentUser, UserRole
 
 from app.api.endpoints.ideas import get_idea_service
@@ -52,6 +52,8 @@ class MockIdeaService:
             "title": payload.title,
             "description": payload.description,
             "category": payload.category,
+            "priority": payload.priority,
+            "estimated_budget": payload.estimated_budget,
             "status": "submitted",
             "created_by": str(current_user.email),
             "created_at": "2026-01-01T00:00:00Z",
@@ -168,6 +170,8 @@ def test_get_ideas_returns_200_and_owner_ideas_list():
             "title": "Owner Idea",
             "description": "Owner-specific idea",
             "category": "Product",
+            "priority": "MEDIUM",
+            "estimated_budget": None,
             "status": "submitted",
             "created_by": "owner.user@epam.com",
             "created_at": "2026-01-01T00:00:00Z",
@@ -232,6 +236,35 @@ def test_submit_idea_allows_admin_role():
 
     assert response.status_code == 201
     assert response.json()["created_by"] == "admin@epam.com"
+
+
+def test_submit_idea_with_dynamic_fields_returns_priority_and_estimated_budget():
+    service = MockIdeaService()
+    app.dependency_overrides[get_current_user] = (
+        lambda: CurrentUser(email="owner.user@epam.com", role=UserRole.SUBMITTER)
+    )
+    app.dependency_overrides[get_idea_service] = lambda: service
+
+    try:
+        client = TestClient(app)
+        response = client.post(
+            "/ideas/submit",
+            data={
+                "title": "Budgeted Idea",
+                "description": "Idea submission with dynamic planning inputs for prioritization.",
+                "category": "Product",
+                "priority": IdeaPriority.HIGH.value,
+                "estimated_budget": "25000.5",
+            },
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["priority"] == IdeaPriority.HIGH.value
+    assert body["estimated_budget"] == 25000.5
+    assert body["status"] == IdeaStatus.SUBMITTED.value
 
 
 def test_get_idea_by_id_returns_correct_idea():

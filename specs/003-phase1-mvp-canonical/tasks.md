@@ -494,7 +494,7 @@ Upon completion of all 126 tasks:
 
 ### Story-002 - Idea Submission & Visibility (FR-008 - FR-014) [COMPLETE]
 
-- [X] POST /ideas/submit - title, description, category (form data)
+- [X] POST /ideas/submit - title, description, category, priority, estimated_budget (form data)
 - [X] Optional single file attachment (multipart/form-data, type + size validated, stored in uploads/)
 - [X] GET /ideas - role-based list (submitter sees own; admin/evaluator sees all) with ?status= filter
 - [X] GET /ideas/{id} - retrieve single idea with all fields including attachment_url

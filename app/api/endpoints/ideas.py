@@ -11,6 +11,7 @@ from app.db.repositories.idea_repository import IdeaRepository
 from app.models.idea import (
     IdeaCategory,
     IdeaCreate,
+    IdeaPriority,
     IdeaRead,
     IdeaStatus,
     IdeaStatusUpdate,
@@ -35,6 +36,8 @@ IDEA_CREATED_EXAMPLE = {
     "title": "AI Review Assistant",
     "description": "Automates first-pass review comments for internal pull requests.",
     "category": "Product",
+    "priority": "MEDIUM",
+    "estimated_budget": 12000.0,
     "status": "submitted",
     "created_by": "jane.doe@epam.com",
     "created_at": "2026-05-13T10:00:00Z",
@@ -136,6 +139,8 @@ async def submit_idea(
     title: str = Form(...),
     description: str = Form(...),
     category: IdeaCategory = Form(...),
+    priority: IdeaPriority = Form(IdeaPriority.MEDIUM),
+    estimated_budget: float | None = Form(None),
     file: Optional[UploadFile] = File(None),
     current_user: CurrentUser = Depends(get_current_user),
     idea_service: IdeaService = Depends(get_idea_service),
@@ -166,6 +171,8 @@ async def submit_idea(
         title=title,
         description=description,
         category=category,
+        priority=priority,
+        estimated_budget=estimated_budget,
         attachment_url=attachment_url,
     )
     return await idea_service.create_idea(payload=payload, current_user=current_user)

@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from app.models.idea import IdeaCreate, IdeaInDB, IdeaRead, IdeaStatus
+from app.models.idea import IdeaCreate, IdeaInDB, IdeaPriority, IdeaRead, IdeaStatus
 from app.models.user import CurrentUser, UserRole
 
 
@@ -16,6 +16,8 @@ class IdeaService:
             title=payload.title,
             description=payload.description,
             category=payload.category,
+            priority=payload.priority,
+            estimated_budget=payload.estimated_budget,
             status=IdeaStatus.SUBMITTED,
             created_by=str(current_user.email),
             created_at=now,
@@ -29,6 +31,8 @@ class IdeaService:
             title=saved.get("title", idea_in_db.title),
             description=saved.get("description", idea_in_db.description),
             category=saved.get("category", idea_in_db.category),
+            priority=saved.get("priority", idea_in_db.priority),
+            estimated_budget=saved.get("estimated_budget", idea_in_db.estimated_budget),
             status=saved.get("status", idea_in_db.status),
             created_by=saved.get("created_by", idea_in_db.created_by),
             created_at=saved.get("created_at", idea_in_db.created_at),
@@ -54,6 +58,8 @@ class IdeaService:
                 title=row["title"],
                 description=row["description"],
                 category=row["category"],
+                priority=row.get("priority", IdeaPriority.MEDIUM),
+                estimated_budget=row.get("estimated_budget"),
                 status=row["status"],
                 created_by=row["created_by"],
                 created_at=row["created_at"],
@@ -72,6 +78,8 @@ class IdeaService:
             title=row["title"],
             description=row["description"],
             category=row["category"],
+            priority=row.get("priority", IdeaPriority.MEDIUM),
+            estimated_budget=row.get("estimated_budget"),
             status=row["status"],
             created_by=row["created_by"],
             created_at=row["created_at"],

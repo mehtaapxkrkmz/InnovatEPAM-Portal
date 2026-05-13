@@ -28,12 +28,20 @@ class IdeaCategory(str, Enum):
     CUSTOMER_EXPERIENCE = "Customer-Experience"
 
 
+class IdeaPriority(str, Enum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+
+
 class IdeaCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     title: str = Field(min_length=3, max_length=255)
     description: str = Field(min_length=10, max_length=5000)
     category: IdeaCategory
+    priority: IdeaPriority = IdeaPriority.MEDIUM
+    estimated_budget: float | None = None
     attachment_url: str | None = None
 
 
@@ -44,6 +52,8 @@ class IdeaRead(BaseModel):
     title: str
     description: str
     category: IdeaCategory
+    priority: IdeaPriority = IdeaPriority.MEDIUM
+    estimated_budget: float | None = None
     status: IdeaStatus = IdeaStatus.SUBMITTED
     created_by: str
     created_at: datetime
@@ -58,6 +68,8 @@ class IdeaInDB(BaseModel):
     title: str
     description: str
     category: IdeaCategory
+    priority: IdeaPriority = IdeaPriority.MEDIUM
+    estimated_budget: float | None = None
     status: IdeaStatus = IdeaStatus.SUBMITTED
     created_by: str
     created_at: datetime
