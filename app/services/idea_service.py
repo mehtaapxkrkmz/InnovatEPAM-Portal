@@ -31,3 +31,18 @@ class IdeaService:
             created_by=saved.get("created_by", idea_in_db.created_by),
             created_at=saved.get("created_at", idea_in_db.created_at),
         )
+
+    async def get_user_ideas(self, email: str) -> list[IdeaRead]:
+        rows = await self.idea_repository.find_by_owner(email)
+        return [
+            IdeaRead(
+                id=str(row.get("_id", row.get("id", ""))),
+                title=row["title"],
+                description=row["description"],
+                category=row["category"],
+                status=row["status"],
+                created_by=row["created_by"],
+                created_at=row["created_at"],
+            )
+            for row in rows
+        ]

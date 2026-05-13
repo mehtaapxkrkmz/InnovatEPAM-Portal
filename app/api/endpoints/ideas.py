@@ -26,3 +26,16 @@ async def submit_idea(
     idea_service: IdeaService = Depends(get_idea_service),
 ) -> IdeaRead:
     return await idea_service.create_idea(payload=payload, current_user=current_user)
+
+
+@router.get(
+    "",
+    response_model=list[IdeaRead],
+    status_code=status.HTTP_200_OK,
+    summary="List ideas for current user",
+)
+async def list_ideas(
+    current_user: dict = Depends(get_current_user),
+    idea_service: IdeaService = Depends(get_idea_service),
+) -> list[IdeaRead]:
+    return await idea_service.get_user_ideas(email=current_user["email"])
