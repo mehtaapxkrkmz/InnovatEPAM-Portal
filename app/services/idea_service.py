@@ -21,7 +21,7 @@ class IdeaService:
             status=IdeaStatus.SUBMITTED,
             created_by=str(current_user.email),
             created_at=now,
-            attachment_url=payload.attachment_url,
+            attachment_urls=payload.attachment_urls,
         )
 
         saved = await self.idea_repository.create(idea_in_db.model_dump(by_alias=True))
@@ -36,7 +36,10 @@ class IdeaService:
             status=saved.get("status", idea_in_db.status),
             created_by=saved.get("created_by", idea_in_db.created_by),
             created_at=saved.get("created_at", idea_in_db.created_at),
-            attachment_url=saved.get("attachment_url", idea_in_db.attachment_url),
+            attachment_urls=saved.get(
+                "attachment_urls",
+                [saved["attachment_url"]] if saved.get("attachment_url") else idea_in_db.attachment_urls,
+            ),
             evaluator_comment=saved.get("evaluator_comment", idea_in_db.evaluator_comment),
         )
 
@@ -63,7 +66,10 @@ class IdeaService:
                 status=row["status"],
                 created_by=row["created_by"],
                 created_at=row["created_at"],
-                attachment_url=row.get("attachment_url"),
+                attachment_urls=row.get(
+                    "attachment_urls",
+                    [row["attachment_url"]] if row.get("attachment_url") else [],
+                ),
                 evaluator_comment=row.get("evaluator_comment"),
             )
             for row in rows
@@ -83,7 +89,10 @@ class IdeaService:
             status=row["status"],
             created_by=row["created_by"],
             created_at=row["created_at"],
-            attachment_url=row.get("attachment_url"),
+            attachment_urls=row.get(
+                "attachment_urls",
+                [row["attachment_url"]] if row.get("attachment_url") else [],
+            ),
             evaluator_comment=row.get("evaluator_comment"),
         )
 

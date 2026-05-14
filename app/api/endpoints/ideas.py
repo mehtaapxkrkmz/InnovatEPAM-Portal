@@ -1,10 +1,11 @@
 ﻿from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
+from app.core.deps import get_current_user
 from app.db.client import get_database
 from app.db.repositories.idea_repository import IdeaRepository
 from app.models.idea import (
@@ -22,6 +23,7 @@ from app.services.idea_service import IdeaService
 router = APIRouter()
 
 MAX_ATTACHMENT_SIZE_BYTES = 5 * 1024 * 1024
+MAX_ATTACHMENT_COUNT = 3
 ALLOWED_ATTACHMENT_TYPES = {
     "application/pdf",
     "image/png",
@@ -64,9 +66,10 @@ async def create_idea(
     title: str = Form(...),
     description: str = Form(...),
     category: IdeaCategory = Form(...),
-    priority: IdeaPriority = Form(...),
-    estimated_budget: float = Form(...),
-    attachment: Optional[UploadFile] = File(None),
+    priority: IdeaPriority = Form(IdeaPriority.MEDIUM),
+    estimated_budget: float | None = Form(None),
+    files: list[UploadFile] | None = File(None),
+    current_user: CurrentUser = Depends(get_current_user),
     idea_service: IdeaService = Depends(get_idea_service),
 ) -> IdeaRead:
     idea_create = IdeaCreate(
@@ -76,26 +79,36 @@ async def create_idea(
         priority=priority,
         estimated_budget=estimated_budget,
     )
-    if attachment is not None:
-        if attachment.content_type not in ALLOWED_ATTACHMENT_TYPES:
+    files = files or []
+
+    if len(files) > MAX_ATTACHMENT_COUNT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Maximum 3 attachments allowed",
+        )
+
+    attachment_urls: list[str] = []
+    for file in files:
+        if file.content_type not in ALLOWED_ATTACHMENT_TYPES:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Unsupported attachment type",
             )
-        content = await attachment.read()
+        content = await file.read()
         if len(content) > MAX_ATTACHMENT_SIZE_BYTES:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Attachment exceeds maximum size of 5MB",
             )
-        extension = Path(attachment.filename or "attachment").suffix
+        extension = Path(file.filename or "attachment").suffix
         unique_name = f"{uuid4()}{extension}"
         target_path = UPLOADS_DIR / unique_name
         target_path.write_bytes(content)
-        idea_create.attachment_url = f"/uploads/{unique_name}"
+        attachment_urls.append(f"/uploads/{unique_name}")
 
-    demo_current_user = CurrentUser(email="demo_user@example.com", role=UserRole.SUBMITTER)
-    return await idea_service.create_idea(payload=idea_create, current_user=demo_current_user)
+    idea_create.attachment_urls = attachment_urls
+
+    return await idea_service.create_idea(payload=idea_create, current_user=current_user)
 
 @router.get("/{id}", response_model=IdeaRead)
 async def get_idea_by_id(
@@ -111,13 +124,14 @@ async def get_idea_by_id(
 async def update_idea_status(
     id: str,
     payload: IdeaStatusUpdate,
+    current_user: CurrentUser = Depends(get_current_user),
     idea_service: IdeaService = Depends(get_idea_service),
 ) -> IdeaStatusUpdateResponse:
     try:
         await idea_service.update_idea_status(
             id,
             payload.status.value,
-            UserRole.ADMIN,
+            current_user.role,
             evaluator_comment=payload.evaluator_comment,
         )
         return IdeaStatusUpdateResponse(

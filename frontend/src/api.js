@@ -32,9 +32,11 @@ export const registerUser = async (payload) => {
 }
 
 export const createIdea = async (formData) => {
+  const token = localStorage.getItem('access_token')
   const response = await api.post('/ideas', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
   })
   return response.data

@@ -21,7 +21,7 @@ class MockIdeaService:
                 "status": "submitted",
                 "created_by": "owner.user@epam.com",
                 "created_at": "2026-01-01T00:00:00Z",
-                "attachment_url": None,
+                "attachment_urls": [],
             }
         }
 
@@ -57,7 +57,7 @@ class MockIdeaService:
             "status": "submitted",
             "created_by": str(current_user.email),
             "created_at": "2026-01-01T00:00:00Z",
-            "attachment_url": payload.attachment_url,
+            "attachment_urls": payload.attachment_urls,
         }
         return self.ideas[idea_id]
 
@@ -175,13 +175,13 @@ def test_get_ideas_returns_200_and_owner_ideas_list():
             "status": "submitted",
             "created_by": "owner.user@epam.com",
             "created_at": "2026-01-01T00:00:00Z",
-            "attachment_url": None,
+            "attachment_urls": [],
             "evaluator_comment": None,
         }
     ]
 
 
-def test_submit_idea_with_file_returns_201_and_attachment_url():
+def test_submit_idea_with_file_returns_201_and_attachment_urls():
     service = MockIdeaService()
     app.dependency_overrides[get_current_user] = (
         lambda: CurrentUser(email="owner.user@epam.com", role=UserRole.SUBMITTER)
@@ -191,13 +191,13 @@ def test_submit_idea_with_file_returns_201_and_attachment_url():
     try:
         client = TestClient(app)
         response = client.post(
-            "/ideas/submit",
+            "/ideas",
             data={
                 "title": "Upload-enabled Idea",
                 "description": "Idea submission with one text attachment.",
                 "category": "Product",
             },
-            files={"file": ("note.txt", b"attachment payload", "text/plain")},
+            files={"files": ("note.txt", b"attachment payload", "text/plain")},
         )
     finally:
         app.dependency_overrides.clear()
@@ -206,10 +206,10 @@ def test_submit_idea_with_file_returns_201_and_attachment_url():
     body = response.json()
     assert body["title"] == "Upload-enabled Idea"
     assert body["created_by"] == "owner.user@epam.com"
-    assert body["attachment_url"] is not None
-    assert body["attachment_url"].startswith("/uploads/")
+    assert len(body["attachment_urls"]) == 1
+    assert body["attachment_urls"][0].startswith("/uploads/")
 
-    uploaded_file = Path(__file__).resolve().parents[2] / body["attachment_url"].lstrip("/")
+    uploaded_file = Path(__file__).resolve().parents[2] / body["attachment_urls"][0].lstrip("/")
     if uploaded_file.exists():
         uploaded_file.unlink()
 
@@ -224,7 +224,7 @@ def test_submit_idea_allows_admin_role():
     try:
         client = TestClient(app)
         response = client.post(
-            "/ideas/submit",
+            "/ideas",
             data={
                 "title": "Admin Submitted Idea",
                 "description": "Admins can submit ideas while also evaluating other submissions.",
@@ -248,7 +248,7 @@ def test_submit_idea_with_dynamic_fields_returns_priority_and_estimated_budget()
     try:
         client = TestClient(app)
         response = client.post(
-            "/ideas/submit",
+            "/ideas",
             data={
                 "title": "Budgeted Idea",
                 "description": "Idea submission with dynamic planning inputs for prioritization.",
