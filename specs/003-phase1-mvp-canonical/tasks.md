@@ -508,9 +508,53 @@ Upon completion of all 126 tasks:
 - [ ] Status transition enforcement (any->any currently allowed; submitted->under_review->final not enforced)
 - [ ] Mandatory evaluator_comment for ACCEPTED/REJECTED statuses (currently optional)
 
+### Story-004 - Scoring System (Phase 7) [COMPLETE]
+
+- [X] Idea model supports optional `score` field with validation range 1..5
+- [X] PATCH /ideas/{id}/status accepts score and persists it
+- [X] Only ADMIN/EVALUATOR can set score (submitter forbidden)
+- [X] Dashboard shows score as `⭐ N/5` and `Not Scored` fallback
+- [X] Admin/Evaluator review UI includes score selector (1..5)
+
 ### Known Remaining Gaps (Story-001)
 
 - [ ] T072-T079 - POST /auth/refresh (refresh token endpoint + token store)
 - [ ] T067, T070, T088, T118-T121 - Audit logging (login/logout/register events)
 - [ ] T108 - GET /auth/me (profile endpoint)
 - [ ] T056, T090, T123 - mutmut mutation testing (score not yet verified; 75% minimum required)
+### Story-005 - Blind Review (Phase 6) [COMPLETE]
+
+**Feature**: Anonymous evaluation mode for fair, unbiased idea assessment.
+
+**Why this priority**: Prevent evaluator bias and ensure ideas are judged on merit alone.
+
+**Requirements**:
+- Admin/evaluator users see creator as "Anonymous User" when reviewing ideas (except own ideas)
+- Regular (submitter) users see actual creator names (no blind review)
+- Owners can always see their own creator name on their ideas
+- UI indicator "Blind Review Mode Active" displays on dashboard for admins/evaluators
+
+#### 6.1 Frontend Implementation (App.jsx)
+
+- [X] PRFND-601 Add "Blind Review Mode Active" indicator to dashboard header (visible only to admin/evaluator)
+- [X] PRFND-602 Add "Creator" field to idea card display
+- [X] PRFND-603 Implement conditional creator display logic:
+  - If user is admin/evaluator AND not owner: show "Anonymous User"
+  - If user is admin/evaluator AND is owner: show actual creator email
+  - If user is submitter: show actual creator email (blind review doesn't apply)
+- [X] PRFND-604 Pass userRole and canManageStatus props to DashboardContent component
+
+#### 6.2 Frontend Tests (test_blind_review.py)
+
+- [X] TUNIT-601 Admin sees "Anonymous User" for other creators
+- [X] TUNIT-602 Admin sees own creator email for own ideas
+- [X] TUNIT-603 Evaluator sees "Anonymous User" for other creators
+- [X] TUNIT-604 Submitter sees actual creator email (no blind review)
+- [X] TUNIT-605 Blind Review Mode indicator logic (admin/evaluator only)
+- [X] TUNIT-606 Unknown/missing creator email fallback
+- [X] TUNIT-607 Admin dashboard mixed ideas visibility
+- [X] TUNIT-608 Submitter dashboard sees all creators
+
+#### 6.3 Verify Phase 6 Tests Pass
+
+- [X] TVERIFY-601 Run all Phase 6 tests (pytest tests/unit/test_blind_review.py -v), verify 100% pass rate

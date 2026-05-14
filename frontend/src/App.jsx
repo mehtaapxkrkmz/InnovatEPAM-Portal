@@ -107,6 +107,7 @@ function DashboardContent({
   onScoreChange,
   userEmail,
   isLoggedIn,
+  userRole,
 }) {
   return (
     <>
@@ -114,9 +115,17 @@ function DashboardContent({
         <p className="text-sm text-slate-500">Home / Dashboard</p>
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-2xl font-semibold text-slate-900">All Ideas on One Screen</h2>
-          <span className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white">
-            Total Ideas: {ideas.length}
-          </span>
+          <div className="flex items-center gap-3">
+            {canManageStatus && (
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800 ring-1 ring-amber-200">
+                <span aria-hidden="true">🔍</span>
+                Blind Review Mode Active
+              </span>
+            )}
+            <span className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white">
+              Total Ideas: {ideas.length}
+            </span>
+          </div>
         </div>
       </section>
 
@@ -198,6 +207,12 @@ function DashboardContent({
                 </p>
 
                 <div className="mt-auto space-y-2 border-t border-slate-100 pt-4 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500">Creator</span>
+                    <span className="font-semibold text-slate-900">
+                      {canManageStatus && !isOwner ? 'Anonymous User' : (idea.created_by || 'Unknown')}
+                    </span>
+                  </div>
                   <div className="flex items-center justify-between">
                     <span className="text-slate-500">Score</span>
                     <span className="font-semibold text-slate-900">
@@ -523,6 +538,7 @@ function App() {
                 onScoreChange={handleScoreChange}
                 userEmail={userEmail}
                 isLoggedIn={isLoggedIn}
+                userRole={userRole}
               />
             }
           />

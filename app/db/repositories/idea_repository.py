@@ -40,10 +40,13 @@ class IdeaRepository:
         idea_id: str,
         status: str,
         evaluator_comment: str | None = None,
+        score: int | None = None,
     ) -> bool:
-        set_fields: dict[str, str] = {"status": status}
+        set_fields: dict[str, object] = {"status": status}
         if evaluator_comment is not None:
             set_fields["evaluator_comment"] = evaluator_comment
+        if score is not None:
+            set_fields["score"] = score
 
         result = await self.collection.update_one(
             {"_id": idea_id},
