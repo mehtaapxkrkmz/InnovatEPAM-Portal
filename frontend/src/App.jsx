@@ -14,10 +14,31 @@ const priorityBadgeClass = {
 const statusBadgeClass = {
   draft: 'bg-slate-100 text-slate-600 ring-slate-300',
   submitted: 'bg-amber-100 text-amber-700 ring-amber-200',
+  tech_review: 'bg-cyan-100 text-cyan-700 ring-cyan-200',
+  business_review: 'bg-indigo-100 text-indigo-700 ring-indigo-200',
+  leadership_review: 'bg-violet-100 text-violet-700 ring-violet-200',
+  final_review: 'bg-fuchsia-100 text-fuchsia-700 ring-fuchsia-200',
   under_review: 'bg-sky-100 text-sky-700 ring-sky-200',
   accepted: 'bg-emerald-100 text-emerald-700 ring-emerald-200',
   rejected: 'bg-rose-100 text-rose-700 ring-rose-200',
 }
+
+const reviewStageFlow = [
+  { order: 1, label: 'Tech Review', status: 'tech_review' },
+  { order: 2, label: 'Business Review', status: 'business_review' },
+  { order: 3, label: 'Leadership Review', status: 'leadership_review' },
+  { order: 4, label: 'Final Review', status: 'final_review' },
+]
+
+const stageOrderByStatus = reviewStageFlow.reduce((acc, stage) => {
+  acc[stage.status] = stage.order
+  return acc
+}, {})
+
+const stageLabelByStatus = reviewStageFlow.reduce((acc, stage) => {
+  acc[stage.status] = stage.label
+  return acc
+}, {})
 
 const statusActionButtons = [
   { label: 'Under Review', value: 'under_review', className: 'bg-sky-600 hover:bg-sky-700' },
@@ -38,32 +59,61 @@ function formatStatus(status) {
   return String(status || 'submitted').replaceAll('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
-function ReviewStagesIndicator({ idea, isExpanded }) {
-  const reviewStages = ['Technical Review', 'Budget Review', 'Leadership Review', 'Final Approval']
-  
+function prettifyStageName(stageName) {
+  if (!stageName) return 'Pending'
+  const mappedLabel = stageLabelByStatus[String(stageName).toLowerCase()]
+  if (mappedLabel) return mappedLabel
+  return String(stageName)
+    .replaceAll('_', ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+function ReviewStagesIndicator({ idea, isExpanded, canManageStatus, onSetReviewStage, isUpdating }) {
+
   if (!isExpanded || idea.status === 'draft' || idea.status === 'submitted') {
     return null
   }
-  
+
+  const activeStageOrder = Number(idea.current_stage_order || stageOrderByStatus[String(idea.status || '').toLowerCase()] || 1)
+  const currentStageLabel = stageLabelByStatus[String(idea.status || '').toLowerCase()] || prettifyStageName(idea.current_stage || idea.status)
+
   return (
     <div className="mt-3 border-t border-slate-100 pt-3">
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Review Stages</p>
       <div className="flex items-center gap-2">
-        {reviewStages.map((stage, index) => (
-          <div key={stage} className="flex flex-col items-center">
-            <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${
-              index === 0 ? 'bg-sky-100 text-sky-700' : 'bg-slate-100 text-slate-600'
-            }`}>
-              {index + 1}
-            </div>
-            {index < reviewStages.length - 1 && (
+        {reviewStageFlow.map((stage, index) => (
+          <div key={stage.status} className="flex flex-col items-center">
+            <button
+              type="button"
+              disabled={!canManageStatus || isUpdating}
+              onClick={(event) => {
+                event.stopPropagation()
+                onSetReviewStage(idea.id, stage.status)
+              }}
+              className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition ${
+                activeStageOrder === stage.order
+                  ? 'bg-sky-600 text-white ring-2 ring-sky-200'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              } disabled:cursor-not-allowed disabled:opacity-50`}
+              title={canManageStatus ? `Set stage ${stage.order}: ${stage.label}` : stage.label}
+            >
+              {stage.order}
+            </button>
+            {index < reviewStageFlow.length - 1 && (
               <div className="h-2 w-6 border-t-2 border-slate-300" />
             )}
           </div>
         ))}
       </div>
-      <div className="mt-2 text-xs text-slate-600">
-        Current: <span className="font-semibold">{idea.current_stage || 'Pending'}</span>
+      <div className="mt-2 flex items-center gap-2 text-xs text-slate-600">
+        <span>
+          Current: <span className="font-semibold">Stage {activeStageOrder} - {currentStageLabel}</span>
+        </span>
+        {isUpdating && (
+          <span className="rounded-full bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-700 ring-1 ring-sky-200">
+            Updating stage...
+          </span>
+        )}
       </div>
     </div>
   )
@@ -139,6 +189,7 @@ function DashboardContent({
   userEmail,
   isLoggedIn,
   userRole,
+  onSetReviewStage,
 }) {
   return (
     <>
@@ -268,7 +319,13 @@ function DashboardContent({
                       <div className="mb-2 rounded-lg bg-blue-50 p-3 text-sm italic text-blue-800">
                         {idea.evaluator_comment || 'No previous feedback yet'}
                       </div>
-                      <ReviewStagesIndicator idea={idea} isExpanded={true} />
+                      <ReviewStagesIndicator
+                        idea={idea}
+                        isExpanded={true}
+                        canManageStatus={canManageStatus}
+                        onSetReviewStage={onSetReviewStage}
+                        isUpdating={isUpdating}
+                      />
                       {attachmentUrls.length > 0 && (
                         <div className="space-y-2" onClick={(event) => event.stopPropagation()}>
                           <p className="text-slate-500">Attachments</p>
@@ -473,6 +530,29 @@ function App() {
     setCommentInputs((prev) => ({ ...prev, [ideaId]: value }))
   }
 
+  const handleSetReviewStage = async (ideaId, stageStatus) => {
+    try {
+      setUpdatingIdeaId(ideaId)
+      await patchIdeaStatus(ideaId, { status: stageStatus })
+      setIdeas((prev) =>
+        prev.map((idea) =>
+          idea.id === ideaId
+            ? {
+                ...idea,
+                status: stageStatus,
+                current_stage: stageStatus,
+                current_stage_order: stageOrderByStatus[stageStatus] || idea.current_stage_order,
+              }
+            : idea
+        )
+      )
+    } catch {
+      setError('Review stage update failed. PATCH /ideas/{id}/status payload must include a valid stage status enum.')
+    } finally {
+      setUpdatingIdeaId('')
+    }
+  }
+
   const handleScoreChange = (ideaId, value) => {
     setScoreInputs((prev) => ({ ...prev, [ideaId]: value }))
   }
@@ -571,6 +651,7 @@ function App() {
                 userEmail={userEmail}
                 isLoggedIn={isLoggedIn}
                 userRole={userRole}
+                onSetReviewStage={handleSetReviewStage}
               />
             }
           />

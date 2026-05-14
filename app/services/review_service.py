@@ -196,3 +196,55 @@ class ReviewService:
         )
         
         return progress
+
+    async def set_stage_by_order(self, idea_id: str, stage_order: int) -> IdeaReviewProgress:
+        """Set a specific review stage directly (used by interactive UI stage clicks)."""
+        if stage_order < 1:
+            raise ValueError("Stage order must be >= 1")
+
+        all_stages = await self.review_repo.get_all_stages()
+        if not all_stages:
+            raise ValueError("No review stages configured")
+
+        target_stage = next((s for s in all_stages if s["stage_order"] == stage_order), None)
+        if target_stage is None:
+            raise ValueError("Requested stage does not exist")
+
+        progress = await self.get_idea_review_progress(idea_id)
+        if not progress:
+            raise ValueError("Idea not found")
+
+        progress.current_stage = target_stage["stage_name"]
+        progress.current_stage_order = target_stage["stage_order"]
+        progress.updated_at = datetime.utcnow()
+
+        # Keep completed stages in sync up to the selected stage.
+        completed = [
+            s["stage_name"]
+            for s in sorted(all_stages, key=lambda s: s["stage_order"])
+            if s["stage_order"] <= stage_order
+        ]
+        progress.stages_completed = completed
+
+        await self.idea_repo.db["idea_reviews"].update_one(
+            {"idea_id": idea_id},
+            {
+                "$set": {
+                    "current_stage": progress.current_stage,
+                    "current_stage_order": progress.current_stage_order,
+                    "stages_completed": progress.stages_completed,
+                    "updated_at": progress.updated_at,
+                }
+            },
+            upsert=True,
+        )
+
+        # Reflect stage selection in idea lifecycle status.
+        max_stage_order = max((s["stage_order"] for s in all_stages), default=stage_order)
+        idea_status = "accepted" if stage_order >= max_stage_order else "under_review"
+        await self.idea_repo.collection.update_one(
+            {"_id": idea_id},
+            {"$set": {"status": idea_status}},
+        )
+
+        return progress

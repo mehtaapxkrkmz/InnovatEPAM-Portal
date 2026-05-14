@@ -3,6 +3,7 @@ Review Stage API Endpoints - for managing multi-stage review workflows.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field
 from app.core.deps import get_current_user, require_admin
 from app.models.user import CurrentUser, UserRole
 from app.models.review_stage import (
@@ -19,6 +20,17 @@ router = APIRouter(prefix="/review-stages", tags=["review-stages"])
 
 # Global service instance (to be initialized)
 review_service: ReviewService = None
+
+
+class SetStageRequest(BaseModel):
+    stage_order: int = Field(ge=1)
+
+
+class SetStageResponse(BaseModel):
+    idea_id: str
+    current_stage: str
+    current_stage_order: int
+    status: str
 
 
 async def get_review_service() -> ReviewService:
@@ -144,5 +156,34 @@ async def reject_at_stage(
             "status": "success",
             "message": f"Idea rejected at current stage",
         }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/set-stage/{idea_id}", response_model=SetStageResponse)
+async def set_stage_for_idea(
+    idea_id: str,
+    payload: SetStageRequest,
+    current_user: CurrentUser = Depends(get_current_user),
+) -> SetStageResponse:
+    """Set idea review stage directly from the dashboard stage selector."""
+    if current_user.role not in [UserRole.ADMIN, UserRole.EVALUATOR]:
+        raise HTTPException(status_code=403, detail="Not authorized to set review stage")
+
+    db = mongo_manager.database
+    service = ReviewService(ReviewStageRepository(db), IdeaRepository(db))
+
+    try:
+        progress = await service.set_stage_by_order(idea_id, payload.stage_order)
+        idea = await db["ideas"].find_one({"_id": idea_id})
+        if not idea:
+            raise HTTPException(status_code=404, detail="Idea not found")
+
+        return SetStageResponse(
+            idea_id=idea_id,
+            current_stage=progress.current_stage or "",
+            current_stage_order=progress.current_stage_order,
+            status=str(idea.get("status", "under_review")),
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

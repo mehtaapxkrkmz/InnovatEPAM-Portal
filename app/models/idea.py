@@ -8,6 +8,10 @@ from pydantic import BaseModel, ConfigDict, Field
 class IdeaStatus(str, Enum):
     DRAFT = "draft"
     SUBMITTED = "submitted"
+    TECH_REVIEW = "tech_review"
+    BUSINESS_REVIEW = "business_review"
+    LEADERSHIP_REVIEW = "leadership_review"
+    FINAL_REVIEW = "final_review"
     UNDER_REVIEW = "under_review"
     ACCEPTED = "accepted"
     REJECTED = "rejected"

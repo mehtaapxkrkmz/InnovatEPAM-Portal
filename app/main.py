@@ -70,7 +70,7 @@ async def request_validation_exception_handler(request, exc: RequestValidationEr
 
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
 app.include_router(ideas_router, prefix="/ideas", tags=["ideas"])
-app.include_router(review_stages_router, prefix="/review-stages", tags=["review-stages"])
+app.include_router(review_stages_router)
 uploads_dir = Path(__file__).resolve().parents[1] / "uploads"
 uploads_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")

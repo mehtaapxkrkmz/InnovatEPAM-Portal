@@ -27,6 +27,18 @@ export const patchIdeaStatus = async (ideaId, payload) => {
   return response.data
 }
 
+export const setIdeaReviewStage = async (ideaId, stageOrder) => {
+  const token = localStorage.getItem('access_token')
+  const response = await api.post(
+    `/review-stages/set-stage/${ideaId}`,
+    { stage_order: stageOrder },
+    {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    }
+  )
+  return response.data
+}
+
 export const loginUser = async (payload) => {
   const response = await api.post('/auth/login', payload)
   return response.data

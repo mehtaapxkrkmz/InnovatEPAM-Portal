@@ -5,6 +5,7 @@ from app.models.idea import IdeaInDB
 
 class IdeaRepository:
     def __init__(self, db: AsyncIOMotorDatabase) -> None:
+        self.db = db
         self.collection = db["ideas"]
 
     async def create(self, idea: IdeaInDB | dict) -> dict:
