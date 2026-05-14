@@ -42,7 +42,7 @@ class IdeaService:
 
     async def get_user_ideas(
         self,
-        email: str,
+        email: str | None,
         role: UserRole | str = UserRole.SUBMITTER,
         status: IdeaStatus | None = None,
     ) -> list[IdeaRead]:
