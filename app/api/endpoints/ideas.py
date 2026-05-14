@@ -138,10 +138,12 @@ async def update_idea_status(
             current_user.role,
             current_user_email=current_user.email,
             evaluator_comment=payload.evaluator_comment,
+            score=payload.score,
         )
         return IdeaStatusUpdateResponse(
             status=payload.status,
             evaluator_comment=payload.evaluator_comment,
+            score=payload.score,
         )
     except PermissionError:
         raise HTTPException(status_code=403, detail="Unauthorized role")

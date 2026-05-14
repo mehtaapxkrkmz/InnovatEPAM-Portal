@@ -61,6 +61,7 @@ class IdeaRead(BaseModel):
     created_at: datetime
     attachment_urls: list[str] = Field(default_factory=list)
     evaluator_comment: Optional[str] = None
+    score: Optional[int] = Field(default=None, ge=1, le=5)
 
 
 class IdeaInDB(BaseModel):
@@ -77,6 +78,7 @@ class IdeaInDB(BaseModel):
     created_at: datetime
     attachment_urls: list[str] = Field(default_factory=list)
     evaluator_comment: Optional[str] = None
+    score: Optional[int] = Field(default=None, ge=1, le=5)
 
 
 class IdeaStatusUpdate(BaseModel):
@@ -84,6 +86,7 @@ class IdeaStatusUpdate(BaseModel):
 
     status: IdeaStatus
     evaluator_comment: Optional[str] = None
+    score: Optional[int] = Field(default=None, ge=1, le=5)
 
 
 class IdeaStatusUpdateResponse(BaseModel):
@@ -91,3 +94,4 @@ class IdeaStatusUpdateResponse(BaseModel):
 
     status: IdeaStatus
     evaluator_comment: Optional[str] = None
+    score: Optional[int] = Field(default=None, ge=1, le=5)

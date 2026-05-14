@@ -29,12 +29,15 @@ class InMemoryIdeaRepo:
         idea_id: str,
         status: str,
         evaluator_comment: str | None = None,
+        score: int | None = None,
     ) -> bool:
         for idea in self._ideas:
             if idea["_id"] == idea_id:
                 idea["status"] = status
                 if evaluator_comment is not None:
                     idea["evaluator_comment"] = evaluator_comment
+                if score is not None:
+                    idea["score"] = score
                 return True
         return False
 
@@ -321,6 +324,58 @@ async def test_update_idea_status_saves_evaluator_comment_when_provided():
         repo._ideas[0]["evaluator_comment"]
         == "Needs risk assessment section before final review."
     )
+
+
+@pytest.mark.asyncio
+async def test_update_idea_status_saves_score_when_admin_provides_it():
+    repo = InMemoryIdeaRepo()
+    service = IdeaService(idea_repository=repo)
+    repo._ideas = [
+        {
+            "_id": "idea-1",
+            "title": "Scored Idea",
+            "description": "Idea with a quality score.",
+            "category": IdeaCategory.PRODUCT,
+            "status": IdeaStatus.SUBMITTED,
+            "created_by": "owner.user@epam.com",
+            "created_at": datetime.now(timezone.utc),
+        }
+    ]
+
+    await service.update_idea_status(
+        "idea-1",
+        IdeaStatus.UNDER_REVIEW,
+        UserRole.ADMIN,
+        score=4,
+    )
+
+    assert repo._ideas[0]["score"] == 4
+
+
+@pytest.mark.asyncio
+async def test_update_idea_status_forbidden_for_submitter_when_setting_score():
+    repo = InMemoryIdeaRepo()
+    service = IdeaService(idea_repository=repo)
+    repo._ideas = [
+        {
+            "_id": "idea-1",
+            "title": "Scored Idea",
+            "description": "Idea with a quality score.",
+            "category": IdeaCategory.PRODUCT,
+            "status": IdeaStatus.SUBMITTED,
+            "created_by": "owner.user@epam.com",
+            "created_at": datetime.now(timezone.utc),
+        }
+    ]
+
+    with pytest.raises(PermissionError):
+        await service.update_idea_status(
+            "idea-1",
+            IdeaStatus.UNDER_REVIEW,
+            UserRole.SUBMITTER,
+            current_user_email="owner.user@epam.com",
+            score=5,
+        )
 
 
 @pytest.mark.asyncio

@@ -41,6 +41,7 @@ class IdeaService:
                 [saved["attachment_url"]] if saved.get("attachment_url") else idea_in_db.attachment_urls,
             ),
             evaluator_comment=saved.get("evaluator_comment", idea_in_db.evaluator_comment),
+            score=saved.get("score", idea_in_db.score),
         )
 
     async def get_user_ideas(
@@ -73,6 +74,7 @@ class IdeaService:
                     [row["attachment_url"]] if row.get("attachment_url") else [],
                 ),
                 evaluator_comment=row.get("evaluator_comment"),
+                score=row.get("score"),
             )
             for row in rows
         ]
@@ -96,6 +98,7 @@ class IdeaService:
                 [row["attachment_url"]] if row.get("attachment_url") else [],
             ),
             evaluator_comment=row.get("evaluator_comment"),
+            score=row.get("score"),
         )
 
     async def update_idea_status(
@@ -105,8 +108,12 @@ class IdeaService:
         user_role: UserRole | str,
         current_user_email: str | None = None,
         evaluator_comment: str | None = None,
+        score: int | None = None,
     ):
         role_value = user_role.value if isinstance(user_role, UserRole) else user_role
+        if score is not None and role_value not in [UserRole.ADMIN.value, UserRole.EVALUATOR.value]:
+            raise PermissionError("Unauthorized role")
+
         if role_value not in [UserRole.ADMIN.value, UserRole.EVALUATOR.value]:
             # Allow idea owner to publish their own draft (DRAFT → SUBMITTED)
             if status == IdeaStatus.SUBMITTED.value and current_user_email:
@@ -122,6 +129,7 @@ class IdeaService:
             idea_id,
             status,
             evaluator_comment=evaluator_comment,
+            score=score,
         )
         if not updated:
             raise ValueError("Idea not found or update failed")
