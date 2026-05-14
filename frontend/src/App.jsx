@@ -103,6 +103,8 @@ function DashboardContent({
   canManageStatus,
   commentInputs,
   onCommentChange,
+  scoreInputs,
+  onScoreChange,
   userEmail,
   isLoggedIn,
 }) {
@@ -197,6 +199,12 @@ function DashboardContent({
 
                 <div className="mt-auto space-y-2 border-t border-slate-100 pt-4 text-sm">
                   <div className="flex items-center justify-between">
+                    <span className="text-slate-500">Score</span>
+                    <span className="font-semibold text-slate-900">
+                      {idea.score ? `⭐ ${idea.score}/5` : 'Not Scored'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
                     <span className="text-slate-500">Category</span>
                     <span className="font-medium text-slate-800">{idea.category}</span>
                   </div>
@@ -253,6 +261,21 @@ function DashboardContent({
 
                 {canManageStatus && isExpanded && (
                   <div className="mt-4 border-t border-slate-100 pt-3" onClick={(event) => event.stopPropagation()}>
+                    <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Score (1-5)
+                    </label>
+                    <select
+                      value={scoreInputs[idea.id] ?? ''}
+                      onChange={(event) => onScoreChange(idea.id, event.target.value)}
+                      className="mb-3 w-full rounded-md border p-2 text-sm focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Not Scored</option>
+                      <option value="1">1 - Poor</option>
+                      <option value="2">2 - Fair</option>
+                      <option value="3">3 - Good</option>
+                      <option value="4">4 - Very Good</option>
+                      <option value="5">5 - Excellent</option>
+                    </select>
                     <textarea
                       value={commentInputs[idea.id] ?? ''}
                       onChange={(event) => onCommentChange(idea.id, event.target.value)}
@@ -308,6 +331,7 @@ function App() {
   const [expandedCards, setExpandedCards] = useState(new Set())
   const [updatingIdeaId, setUpdatingIdeaId] = useState('')
   const [commentInputs, setCommentInputs] = useState({})
+  const [scoreInputs, setScoreInputs] = useState({})
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userLabel, setUserLabel] = useState('User')
   const [userRole, setUserRole] = useState(null)
@@ -371,15 +395,23 @@ function App() {
     })
   }
 
-  const handleStatusUpdate = async (ideaId, status) => {
+  const handleStatusUpdate = async (ideaId, status, scoreOverride = undefined) => {
     const evaluatorComment = (commentInputs[ideaId] ?? '').trim()
+    const selectedScore = scoreOverride === undefined
+      ? scoreInputs[ideaId]
+      : scoreOverride
+    const score = selectedScore === '' || selectedScore === null || selectedScore === undefined
+      ? null
+      : Number(selectedScore)
 
     try {
       setUpdatingIdeaId(ideaId)
-      await patchIdeaStatus(ideaId, { status, evaluator_comment: evaluatorComment })
+      await patchIdeaStatus(ideaId, { status, evaluator_comment: evaluatorComment, score })
       setIdeas((prev) =>
         prev.map((idea) =>
-          idea.id === ideaId ? { ...idea, status, evaluator_comment: evaluatorComment } : idea
+          idea.id === ideaId
+            ? { ...idea, status, evaluator_comment: evaluatorComment, score: score ?? idea.score ?? null }
+            : idea
         )
       )
       setCommentInputs((prev) => ({ ...prev, [ideaId]: '' }))
@@ -392,6 +424,10 @@ function App() {
 
   const handleCommentChange = (ideaId, value) => {
     setCommentInputs((prev) => ({ ...prev, [ideaId]: value }))
+  }
+
+  const handleScoreChange = (ideaId, value) => {
+    setScoreInputs((prev) => ({ ...prev, [ideaId]: value }))
   }
 
   const handleLogout = () => {
@@ -483,6 +519,8 @@ function App() {
                 canManageStatus={canManageStatus}
                 commentInputs={commentInputs}
                 onCommentChange={handleCommentChange}
+                scoreInputs={scoreInputs}
+                onScoreChange={handleScoreChange}
                 userEmail={userEmail}
                 isLoggedIn={isLoggedIn}
               />
