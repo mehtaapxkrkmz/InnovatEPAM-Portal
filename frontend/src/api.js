@@ -8,7 +8,10 @@ const api = axios.create({
 
 export const fetchIdeas = async () => {
   try {
-    const response = await api.get('/ideas')
+    const token = localStorage.getItem('access_token')
+    const response = await api.get('/ideas', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
     return response.data
   } catch (error) {
     console.error("API Error:", error)
@@ -17,7 +20,10 @@ export const fetchIdeas = async () => {
 }
 
 export const patchIdeaStatus = async (ideaId, payload) => {
-  const response = await api.patch(`/ideas/${ideaId}/status`, payload)
+  const token = localStorage.getItem('access_token')
+  const response = await api.patch(`/ideas/${ideaId}/status`, payload, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  })
   return response.data
 }
 

@@ -47,6 +47,7 @@ function SubmitIdea() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [uploadWarning, setUploadWarning] = useState('')
+  const [submitIntent, setSubmitIntent] = useState('submitted')
 
   const handleChange = (event) => {
     const { name, value, files, type } = event.target
@@ -93,10 +94,15 @@ function SubmitIdea() {
       formData.append('category', form.category)
       formData.append('priority', form.priority)
       formData.append('estimated_budget', String(form.estimated_budget || 0))
+      formData.append('initial_status', submitIntent)
       form.files.forEach((file) => formData.append('files', file))
 
       await createIdea(formData)
-      setSuccess('Idea submitted successfully. Redirecting to dashboard...')
+      setSuccess(
+        submitIntent === 'draft'
+          ? 'Draft saved! Redirecting to dashboard...'
+          : 'Idea submitted successfully. Redirecting to dashboard...'
+      )
       setTimeout(() => navigate('/'), 1200)
     } catch (submitError) {
       const message = submitError?.response?.data?.detail || 'Idea submission failed. Please try again.'
@@ -271,13 +277,24 @@ function SubmitIdea() {
           )}
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="mt-2 inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {loading ? 'Submitting...' : 'Submit Idea'}
-        </button>
+        <div className="mt-2 flex gap-3">
+          <button
+            type="submit"
+            disabled={loading}
+            onClick={() => setSubmitIntent('submitted')}
+            className="flex-1 inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loading && submitIntent === 'submitted' ? 'Submitting...' : 'Submit Idea'}
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            onClick={() => setSubmitIntent('draft')}
+            className="flex-1 inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loading && submitIntent === 'draft' ? 'Saving...' : 'Save as Draft'}
+          </button>
+        </div>
       </form>
 
       {error && <p className="mt-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>}

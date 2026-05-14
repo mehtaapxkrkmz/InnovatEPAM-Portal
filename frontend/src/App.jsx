@@ -12,6 +12,7 @@ const priorityBadgeClass = {
 }
 
 const statusBadgeClass = {
+  draft: 'bg-slate-100 text-slate-600 ring-slate-300',
   submitted: 'bg-amber-100 text-amber-700 ring-amber-200',
   under_review: 'bg-sky-100 text-sky-700 ring-sky-200',
   accepted: 'bg-emerald-100 text-emerald-700 ring-emerald-200',
@@ -102,6 +103,8 @@ function DashboardContent({
   canManageStatus,
   commentInputs,
   onCommentChange,
+  userEmail,
+  isLoggedIn,
 }) {
   return (
     <>
@@ -157,6 +160,8 @@ function DashboardContent({
             const status = String(idea.status || 'submitted').toLowerCase()
             const statusClass = statusBadgeClass[status] || statusBadgeClass.submitted
             const isExpanded = expandedCards.has(idea.id)
+            const isDraft = status === 'draft'
+            const isOwner = isLoggedIn && idea.created_by === userEmail
             const attachmentUrls = Array.isArray(idea.attachment_urls)
               ? idea.attachment_urls
               : idea.attachment_url
@@ -271,6 +276,20 @@ function DashboardContent({
                     </div>
                   </div>
                 )}
+
+                {isDraft && isOwner && isExpanded && (
+                  <div className="mt-4 border-t border-slate-100 pt-3" onClick={(event) => event.stopPropagation()}>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Draft Actions</p>
+                    <button
+                      type="button"
+                      disabled={isUpdating}
+                      className="w-full rounded-md bg-blue-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      onClick={() => onUpdateStatus(idea.id, 'submitted')}
+                    >
+                      {isUpdating ? 'Publishing...' : 'Publish Idea'}
+                    </button>
+                  </div>
+                )}
               </article>
             )
           })}
@@ -292,6 +311,7 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userLabel, setUserLabel] = useState('User')
   const [userRole, setUserRole] = useState(null)
+  const [userEmail, setUserEmail] = useState(null)
 
   useEffect(() => {
     const token = localStorage.getItem('access_token')
@@ -302,6 +322,7 @@ function App() {
     setIsLoggedIn(Boolean(token))
     setUserLabel(storedEmail ? storedEmail.split('@')[0] : parsedAuth.label)
     setUserRole(storedRole || parsedAuth.role)
+    setUserEmail(storedEmail || null)
   }, [location.pathname])
 
   useEffect(() => {
@@ -381,6 +402,7 @@ function App() {
     setIsLoggedIn(false)
     setUserLabel('User')
     setUserRole(null)
+    setUserEmail(null)
     navigate('/')
   }
 
@@ -461,6 +483,8 @@ function App() {
                 canManageStatus={canManageStatus}
                 commentInputs={commentInputs}
                 onCommentChange={handleCommentChange}
+                userEmail={userEmail}
+                isLoggedIn={isLoggedIn}
               />
             }
           />
