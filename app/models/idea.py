@@ -42,7 +42,7 @@ class IdeaCreate(BaseModel):
     category: IdeaCategory
     priority: IdeaPriority = IdeaPriority.MEDIUM
     estimated_budget: float | None = None
-    attachment_url: str | None = None
+    attachment_urls: list[str] = Field(default_factory=list)
 
 
 class IdeaRead(BaseModel):
@@ -57,7 +57,7 @@ class IdeaRead(BaseModel):
     status: IdeaStatus = IdeaStatus.SUBMITTED
     created_by: str
     created_at: datetime
-    attachment_url: str | None = None
+    attachment_urls: list[str] = Field(default_factory=list)
     evaluator_comment: Optional[str] = None
 
 
@@ -73,7 +73,7 @@ class IdeaInDB(BaseModel):
     status: IdeaStatus = IdeaStatus.SUBMITTED
     created_by: str
     created_at: datetime
-    attachment_url: str | None = None
+    attachment_urls: list[str] = Field(default_factory=list)
     evaluator_comment: Optional[str] = None
 
 

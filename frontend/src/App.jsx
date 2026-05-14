@@ -48,6 +48,13 @@ function resolveAttachmentUrl(attachmentUrl) {
   return `http://127.0.0.1:8000${normalized}`
 }
 
+function isImageAttachment(url) {
+  if (!url) {
+    return false
+  }
+  return /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(url)
+}
+
 function parseAuthFromToken(token) {
   if (!token) {
     return { label: 'User', role: null }
@@ -150,7 +157,11 @@ function DashboardContent({
             const status = String(idea.status || 'submitted').toLowerCase()
             const statusClass = statusBadgeClass[status] || statusBadgeClass.submitted
             const isExpanded = expandedCards.has(idea.id)
-            const attachmentHref = resolveAttachmentUrl(idea.attachment_url)
+            const attachmentUrls = Array.isArray(idea.attachment_urls)
+              ? idea.attachment_urls
+              : idea.attachment_url
+                ? [idea.attachment_url]
+                : []
             const isUpdating = updatingIdeaId === idea.id
 
             return (
@@ -198,16 +209,38 @@ function DashboardContent({
                       <div className="mb-2 rounded-lg bg-blue-50 p-3 text-sm italic text-blue-800">
                         {idea.evaluator_comment || 'No previous feedback yet'}
                       </div>
-                      {attachmentHref && (
-                        <a
-                          href={attachmentHref}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex w-fit rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 transition hover:bg-blue-100"
-                          onClick={(event) => event.stopPropagation()}
-                        >
-                          View Attachment
-                        </a>
+                      {attachmentUrls.length > 0 && (
+                        <div className="space-y-2" onClick={(event) => event.stopPropagation()}>
+                          <p className="text-slate-500">Attachments</p>
+                          <div className="flex flex-wrap gap-2">
+                            {attachmentUrls.map((attachmentUrl, index) => {
+                              const attachmentHref = resolveAttachmentUrl(attachmentUrl)
+                              const imagePreview = isImageAttachment(attachmentUrl)
+                              return (
+                                <div key={`${idea.id}-file-${index}`} className="flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5">
+                                  {imagePreview && attachmentHref && (
+                                    <img
+                                      src={attachmentHref}
+                                      alt={`Attachment ${index + 1}`}
+                                      className="h-8 w-8 rounded object-cover"
+                                      loading="lazy"
+                                    />
+                                  )}
+                                  {attachmentHref && (
+                                    <a
+                                      href={attachmentHref}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="inline-flex w-fit rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 transition hover:bg-blue-100"
+                                    >
+                                      View {index + 1}
+                                    </a>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
                       )}
                     </>
                   )}
