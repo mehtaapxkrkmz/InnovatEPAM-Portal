@@ -12,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api.endpoints.auth import router as auth_router
 from app.api.endpoints.ideas import router as ideas_router
+from app.api.endpoints.review_stages import router as review_stages_router
 from app.core.config import get_settings
 from app.db.client import mongo_manager
 
@@ -69,6 +70,7 @@ async def request_validation_exception_handler(request, exc: RequestValidationEr
 
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
 app.include_router(ideas_router, prefix="/ideas", tags=["ideas"])
+app.include_router(review_stages_router, prefix="/review-stages", tags=["review-stages"])
 uploads_dir = Path(__file__).resolve().parents[1] / "uploads"
 uploads_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")

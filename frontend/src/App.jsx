@@ -38,6 +38,37 @@ function formatStatus(status) {
   return String(status || 'submitted').replaceAll('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
+function ReviewStagesIndicator({ idea, isExpanded }) {
+  const reviewStages = ['Technical Review', 'Budget Review', 'Leadership Review', 'Final Approval']
+  
+  if (!isExpanded || idea.status === 'draft' || idea.status === 'submitted') {
+    return null
+  }
+  
+  return (
+    <div className="mt-3 border-t border-slate-100 pt-3">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Review Stages</p>
+      <div className="flex items-center gap-2">
+        {reviewStages.map((stage, index) => (
+          <div key={stage} className="flex flex-col items-center">
+            <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${
+              index === 0 ? 'bg-sky-100 text-sky-700' : 'bg-slate-100 text-slate-600'
+            }`}>
+              {index + 1}
+            </div>
+            {index < reviewStages.length - 1 && (
+              <div className="h-2 w-6 border-t-2 border-slate-300" />
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="mt-2 text-xs text-slate-600">
+        Current: <span className="font-semibold">{idea.current_stage || 'Pending'}</span>
+      </div>
+    </div>
+  )
+}
+
 function resolveAttachmentUrl(attachmentUrl) {
   if (!attachmentUrl) {
     return null
@@ -237,6 +268,7 @@ function DashboardContent({
                       <div className="mb-2 rounded-lg bg-blue-50 p-3 text-sm italic text-blue-800">
                         {idea.evaluator_comment || 'No previous feedback yet'}
                       </div>
+                      <ReviewStagesIndicator idea={idea} isExpanded={true} />
                       {attachmentUrls.length > 0 && (
                         <div className="space-y-2" onClick={(event) => event.stopPropagation()}>
                           <p className="text-slate-500">Attachments</p>
