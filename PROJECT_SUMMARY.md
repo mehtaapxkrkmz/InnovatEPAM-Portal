@@ -78,7 +78,7 @@ The `SpecKit` framework elevated our practices from reactive "vibe coding" to pr
 
 ---
 
-**Author**: InnovatEPAM Development Team  
+**Author**: Mehtap Korkmaz  
 **Date**: May 15, 2026  
 **Course**: A201 - Beyond Vibe Coding  
 **Final Metrics**: 203 tests | 82% coverage | 7 feature phases | 3 ADRs | Production-ready
