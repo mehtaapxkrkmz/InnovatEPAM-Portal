@@ -497,7 +497,7 @@ Upon completion of all 126 tasks:
 - [X] POST /ideas/submit - title, description, category, priority, estimated_budget (form data)
 - [X] Multiple file attachments (multipart/form-data, up to 3 files, type + size validated, stored in uploads/)
 - [X] Submit form UX: staged file list with file-type badges, per-file remove action, and max-3 warning
-- [X] GET /ideas - role-based list (submitter sees own; admin/evaluator sees all) with ?status= filter
+- [X] GET /ideas - visibility list (all users see non-draft ideas; drafts are owner-private) with ?status= filter
 - [X] GET /ideas/{id} - retrieve single idea with all fields including attachment_urls
 
 ### Story-003 - Evaluation Workflow (FR-015 - FR-018) [COMPLETE]

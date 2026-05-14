@@ -107,7 +107,7 @@ async def test_create_idea_tracks_ownership_from_current_user():
 
 
 @pytest.mark.asyncio
-async def test_get_user_ideas_returns_only_current_user_ideas():
+async def test_get_user_ideas_for_submitter_returns_public_and_own_drafts_only():
     repo = InMemoryIdeaRepo()
     service = IdeaService(idea_repository=repo)
     current_user = _mock_submitter("owner.user@epam.com")
@@ -131,13 +131,31 @@ async def test_get_user_ideas_returns_only_current_user_ideas():
             "created_by": "another.user@epam.com",
             "created_at": datetime.now(timezone.utc),
         },
+        {
+            "_id": "idea-3",
+            "title": "Owner Draft",
+            "description": "Draft created by owner user.",
+            "category": IdeaCategory.PROCESS,
+            "status": IdeaStatus.DRAFT,
+            "created_by": "owner.user@epam.com",
+            "created_at": datetime.now(timezone.utc),
+        },
+        {
+            "_id": "idea-4",
+            "title": "Other Draft",
+            "description": "Draft created by another user.",
+            "category": IdeaCategory.PROCESS,
+            "status": IdeaStatus.DRAFT,
+            "created_by": "another.user@epam.com",
+            "created_at": datetime.now(timezone.utc),
+        },
     ]
 
     result = await service.get_user_ideas(email=str(current_user.email), role=UserRole.SUBMITTER)
 
-    assert repo.last_owner_requested == "owner.user@epam.com"
-    assert len(result) == 1
-    assert all(idea.created_by == "owner.user@epam.com" for idea in result)
+    ids = {idea.id for idea in result}
+    assert ids == {"idea-1", "idea-2", "idea-3"}
+    assert "idea-4" not in ids
 
 
 @pytest.mark.asyncio
@@ -303,3 +321,24 @@ async def test_update_idea_status_saves_evaluator_comment_when_provided():
         repo._ideas[0]["evaluator_comment"]
         == "Needs risk assessment section before final review."
     )
+
+
+@pytest.mark.asyncio
+async def test_draft_idea_not_visible_to_different_admin():
+    """Drafts must not appear in the list for an admin who does not own them."""
+    repo = InMemoryIdeaRepo()
+    repo._ideas = [
+        {
+            "_id": "d1",
+            "title": "Draft Idea",
+            "description": "Private draft not yet published.",
+            "category": "Product",
+            "status": "draft",
+            "created_by": "owner@epam.com",
+            "created_at": datetime.now(timezone.utc),
+            "priority": "MEDIUM",
+        }
+    ]
+    service = IdeaService(idea_repository=repo)
+    result = await service.get_user_ideas(email="admin@epam.com", role=UserRole.ADMIN)
+    assert len(result) == 0

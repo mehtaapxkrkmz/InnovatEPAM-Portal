@@ -5,7 +5,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, get_current_user_optional
 from app.db.client import get_database
 from app.db.repositories.idea_repository import IdeaRepository
 from app.models.idea import (
@@ -45,15 +45,17 @@ def get_idea_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> IdeaSe
 )
 async def list_ideas(
     idea_service: IdeaService = Depends(get_idea_service),
+    current_user: CurrentUser | None = Depends(get_current_user_optional),
     status: Annotated[
         IdeaStatus | None,
         Query(alias="status", description="Filter ideas by status"),
     ] = None,
 ) -> list[IdeaRead]:
-    # Public list endpoint for live demo use.
+    user_email = current_user.email if current_user else None
+    user_role = current_user.role if current_user else UserRole.ADMIN
     return await idea_service.get_user_ideas(
-        email=None,
-        role=UserRole.ADMIN,
+        email=user_email,
+        role=user_role,
         status=status
     )
 
@@ -68,6 +70,7 @@ async def create_idea(
     category: IdeaCategory = Form(...),
     priority: IdeaPriority = Form(IdeaPriority.MEDIUM),
     estimated_budget: float | None = Form(None),
+    initial_status: IdeaStatus = Form(IdeaStatus.SUBMITTED),
     files: list[UploadFile] | None = File(None),
     current_user: CurrentUser = Depends(get_current_user),
     idea_service: IdeaService = Depends(get_idea_service),
@@ -78,6 +81,7 @@ async def create_idea(
         category=category,
         priority=priority,
         estimated_budget=estimated_budget,
+        initial_status=initial_status if initial_status in (IdeaStatus.SUBMITTED, IdeaStatus.DRAFT) else IdeaStatus.SUBMITTED,
     )
     files = files or []
 
@@ -132,6 +136,7 @@ async def update_idea_status(
             id,
             payload.status.value,
             current_user.role,
+            current_user_email=current_user.email,
             evaluator_comment=payload.evaluator_comment,
         )
         return IdeaStatusUpdateResponse(

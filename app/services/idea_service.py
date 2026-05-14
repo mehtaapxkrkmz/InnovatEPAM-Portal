@@ -18,7 +18,7 @@ class IdeaService:
             category=payload.category,
             priority=payload.priority,
             estimated_budget=payload.estimated_budget,
-            status=IdeaStatus.SUBMITTED,
+            status=payload.initial_status,
             created_by=str(current_user.email),
             created_at=now,
             attachment_urls=payload.attachment_urls,
@@ -50,11 +50,13 @@ class IdeaService:
         status: IdeaStatus | None = None,
     ) -> list[IdeaRead]:
         status_value = status.value if status is not None else None
-        role_value = role.value if isinstance(role, UserRole) else role
-        if role_value in (UserRole.ADMIN.value, UserRole.EVALUATOR.value):
-            rows = await self.idea_repository.find_all(status=status_value)
-        else:
-            rows = await self.idea_repository.find_by_owner(email, status=status_value)
+        rows = await self.idea_repository.find_all(status=status_value)
+        # Drafts are private for everyone and are only visible to their owner.
+        rows = [
+            row for row in rows
+            if row.get("status") != IdeaStatus.DRAFT.value
+            or (email is not None and row.get("created_by") == email)
+        ]
         return [
             IdeaRead(
                 id=str(row.get("_id", row.get("id", ""))),
@@ -101,11 +103,20 @@ class IdeaService:
         idea_id: str,
         status: str,
         user_role: UserRole | str,
+        current_user_email: str | None = None,
         evaluator_comment: str | None = None,
     ):
         role_value = user_role.value if isinstance(user_role, UserRole) else user_role
         if role_value not in [UserRole.ADMIN.value, UserRole.EVALUATOR.value]:
-            raise PermissionError("Unauthorized role")
+            # Allow idea owner to publish their own draft (DRAFT → SUBMITTED)
+            if status == IdeaStatus.SUBMITTED.value and current_user_email:
+                idea = await self.idea_repository.get_by_id(idea_id)
+                if idea and idea.get("created_by") == current_user_email:
+                    pass  # owner is allowed to publish their draft
+                else:
+                    raise PermissionError("Unauthorized role")
+            else:
+                raise PermissionError("Unauthorized role")
 
         updated = await self.idea_repository.update_status(
             idea_id,

@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class IdeaStatus(str, Enum):
+    DRAFT = "draft"
     SUBMITTED = "submitted"
     UNDER_REVIEW = "under_review"
     ACCEPTED = "accepted"
@@ -43,6 +44,7 @@ class IdeaCreate(BaseModel):
     priority: IdeaPriority = IdeaPriority.MEDIUM
     estimated_budget: float | None = None
     attachment_urls: list[str] = Field(default_factory=list)
+    initial_status: IdeaStatus = IdeaStatus.SUBMITTED
 
 
 class IdeaRead(BaseModel):

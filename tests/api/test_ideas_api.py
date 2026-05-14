@@ -35,6 +35,7 @@ class MockIdeaService:
         idea_id: str,
         status: str,
         user_role: UserRole,
+        current_user_email: str | None = None,
         evaluator_comment: str | None = None,
     ):
         if user_role not in [UserRole.ADMIN, UserRole.EVALUATOR]:
@@ -54,7 +55,7 @@ class MockIdeaService:
             "category": payload.category,
             "priority": payload.priority,
             "estimated_budget": payload.estimated_budget,
-            "status": "submitted",
+            "status": getattr(payload, "initial_status", "submitted"),
             "created_by": str(current_user.email),
             "created_at": "2026-01-01T00:00:00Z",
             "attachment_urls": payload.attachment_urls,
@@ -116,6 +117,112 @@ def test_get_ideas_invalid_status_filter_returns_400_not_422():
         app.dependency_overrides.clear()
 
     assert response.status_code == 400
+
+
+def test_draft_not_visible_to_other_admin_user():
+    """A draft created by one user must NOT be visible to an admin with a different email."""
+    from tests.unit.test_idea_service import InMemoryIdeaRepo
+    from app.core.deps import get_current_user_optional
+    from app.services.idea_service import IdeaService
+
+    repo = InMemoryIdeaRepo()
+    repo._ideas.append({
+        "_id": "draft-1",
+        "title": "Private Draft",
+        "description": "Private draft idea description.",
+        "category": "Product",
+        "status": "draft",
+        "created_by": "owner.user@epam.com",
+        "created_at": datetime.now(timezone.utc),
+        "priority": "MEDIUM",
+        "attachment_urls": [],
+    })
+    service = IdeaService(idea_repository=repo)
+    app.dependency_overrides[get_current_user_optional] = (
+        lambda: CurrentUser(email="admin@epam.com", role=UserRole.ADMIN)
+    )
+    app.dependency_overrides[get_idea_service] = lambda: service
+
+    try:
+        client = TestClient(app)
+        response = client.get("/ideas")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    ids = [idea["id"] for idea in response.json()]
+    assert "draft-1" not in ids
+
+
+def test_logged_in_submitter_sees_public_ideas_and_own_drafts_only():
+    from tests.unit.test_idea_service import InMemoryIdeaRepo
+    from app.core.deps import get_current_user_optional
+    from app.services.idea_service import IdeaService
+
+    repo = InMemoryIdeaRepo()
+    repo._ideas.extend(
+        [
+            {
+                "_id": "public-1",
+                "title": "Public Submitted",
+                "description": "Visible to all users.",
+                "category": "Product",
+                "status": "submitted",
+                "created_by": "owner.user@epam.com",
+                "created_at": datetime.now(timezone.utc),
+                "priority": "MEDIUM",
+                "attachment_urls": [],
+            },
+            {
+                "_id": "public-2",
+                "title": "Other Public",
+                "description": "Also visible to all users.",
+                "category": "Process",
+                "status": "accepted",
+                "created_by": "someone.else@epam.com",
+                "created_at": datetime.now(timezone.utc),
+                "priority": "MEDIUM",
+                "attachment_urls": [],
+            },
+            {
+                "_id": "owner-draft",
+                "title": "Owner Draft",
+                "description": "Visible only to owner.",
+                "category": "Product",
+                "status": "draft",
+                "created_by": "owner.user@epam.com",
+                "created_at": datetime.now(timezone.utc),
+                "priority": "MEDIUM",
+                "attachment_urls": [],
+            },
+            {
+                "_id": "other-draft",
+                "title": "Other Draft",
+                "description": "Must stay hidden.",
+                "category": "Product",
+                "status": "draft",
+                "created_by": "someone.else@epam.com",
+                "created_at": datetime.now(timezone.utc),
+                "priority": "MEDIUM",
+                "attachment_urls": [],
+            },
+        ]
+    )
+    service = IdeaService(idea_repository=repo)
+    app.dependency_overrides[get_current_user_optional] = (
+        lambda: CurrentUser(email="owner.user@epam.com", role=UserRole.SUBMITTER)
+    )
+    app.dependency_overrides[get_idea_service] = lambda: service
+
+    try:
+        client = TestClient(app)
+        response = client.get("/ideas")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    ids = {idea["id"] for idea in response.json()}
+    assert ids == {"public-1", "public-2", "owner-draft"}
 
 
 def test_get_ideas_empty_status_filter_returns_400_not_422():
