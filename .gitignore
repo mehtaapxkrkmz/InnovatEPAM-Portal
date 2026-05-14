@@ -12,3 +12,7 @@ Thumbs.db
 *.swp
 .vscode/
 .idea/
+node_modules/
+build/
+*.log
+.env*
