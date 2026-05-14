@@ -86,3 +86,10 @@ def require_admin(current_user: CurrentUser = Depends(get_current_user)) -> Curr
         )
     return current_user
 
+def require_evaluator(current_user: CurrentUser = Depends(get_current_user)) -> CurrentUser:
+    if current_user.role not in [UserRole.EVALUATOR, UserRole.ADMIN]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Evaluator privileges required",
+        )
+    return current_user

@@ -572,3 +572,252 @@ def test_update_idea_status_invalid_payload_returns_400_not_422():
         app.dependency_overrides.clear()
 
     assert response.status_code == 400
+
+
+def test_get_idea_by_id_not_found():
+    """Test get idea by ID returns 404 when not found."""
+    app.dependency_overrides[get_current_user] = (
+        lambda: CurrentUser(email="admin@epam.com", role=UserRole.ADMIN)
+    )
+    app.dependency_overrides[get_idea_service] = lambda: MockIdeaService()
+
+    try:
+        client = TestClient(app)
+        response = client.get("/ideas/nonexistent-id")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 404
+    assert "Idea not found" in response.text
+
+
+def test_update_idea_status_not_found():
+    """Test update idea status returns 404 when idea not found."""
+    app.dependency_overrides[get_current_user] = (
+        lambda: CurrentUser(email="admin@epam.com", role=UserRole.ADMIN)
+    )
+    app.dependency_overrides[get_idea_service] = lambda: MockIdeaService()
+
+    try:
+        client = TestClient(app)
+        response = client.patch(
+            "/ideas/nonexistent-id/status",
+            json={"status": "accepted"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 404
+    assert "Idea not found" in response.text
+
+
+def test_submit_idea_creates_uploads_directory():
+    """Test submit idea ensures uploads directory exists."""
+    service = MockIdeaService()
+    app.dependency_overrides[get_current_user] = (
+        lambda: CurrentUser(email="owner.user@epam.com", role=UserRole.SUBMITTER)
+    )
+    app.dependency_overrides[get_idea_service] = lambda: service
+
+    try:
+        client = TestClient(app)
+        response = client.post(
+            "/ideas",
+            data={
+                "title": "Directory Test Idea",
+                "description": "Tests that uploads directory is created.",
+                "category": "Product",
+            },
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 201
+    uploads_dir = Path(__file__).resolve().parents[2] / "uploads"
+    assert uploads_dir.exists()
+
+
+def test_get_ideas_without_authentication():
+    """Test list ideas works without authentication (optional auth)."""
+    app.dependency_overrides[get_current_user] = None
+    app.dependency_overrides[get_idea_service] = lambda: MockIdeaService()
+
+    from app.core.deps import get_current_user_optional
+    app.dependency_overrides[get_current_user_optional] = lambda: None
+
+    try:
+        client = TestClient(app)
+        response = client.get("/ideas")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+
+
+def test_update_idea_status_all_status_values():
+    """Test update idea status works with all valid status enum values."""
+    app.dependency_overrides[get_current_user] = (
+        lambda: CurrentUser(email="admin@epam.com", role=UserRole.ADMIN)
+    )
+    app.dependency_overrides[get_idea_service] = lambda: MockIdeaService()
+
+    statuses_to_test = [
+        IdeaStatus.SUBMITTED.value,
+        IdeaStatus.DRAFT.value,
+        IdeaStatus.UNDER_REVIEW.value,
+        IdeaStatus.ACCEPTED.value,
+        IdeaStatus.REJECTED.value,
+    ]
+
+    try:
+        client = TestClient(app)
+        for status in statuses_to_test:
+            response = client.patch(
+                "/ideas/idea-1/status",
+                json={"status": status},
+            )
+            assert response.status_code == 200
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_get_ideas_as_evaluator_returns_all():
+    """Test evaluator can see all ideas (not just own)."""
+    app.dependency_overrides[get_current_user] = (
+        lambda: CurrentUser(email="evaluator@epam.com", role=UserRole.EVALUATOR)
+    )
+    app.dependency_overrides[get_idea_service] = lambda: MockIdeaService()
+
+    try:
+        client = TestClient(app)
+        response = client.get("/ideas")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert len(response.json()) > 0
+
+
+def test_submit_idea_without_optional_fields():
+    """Test submit idea works with minimal required fields."""
+    service = MockIdeaService()
+    app.dependency_overrides[get_current_user] = (
+        lambda: CurrentUser(email="owner.user@epam.com", role=UserRole.SUBMITTER)
+    )
+    app.dependency_overrides[get_idea_service] = lambda: service
+
+    try:
+        client = TestClient(app)
+        response = client.post(
+            "/ideas",
+            data={
+                "title": "Minimal Idea",
+                "description": "Only title and description provided.",
+                "category": "Product",
+            },
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["priority"] == IdeaPriority.MEDIUM.value
+    assert body["estimated_budget"] is None
+
+
+def test_submit_idea_with_draft_status():
+    """Test submit idea with initial_status as DRAFT."""
+    service = MockIdeaService()
+    app.dependency_overrides[get_current_user] = (
+        lambda: CurrentUser(email="owner.user@epam.com", role=UserRole.SUBMITTER)
+    )
+    app.dependency_overrides[get_idea_service] = lambda: service
+
+    try:
+        client = TestClient(app)
+        response = client.post(
+            "/ideas",
+            data={
+                "title": "Draft Idea",
+                "description": "Submitted as draft.",
+                "category": "Product",
+                "initial_status": IdeaStatus.DRAFT.value,
+            },
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 201
+    assert response.json()["status"] == IdeaStatus.DRAFT.value
+
+
+def test_submit_idea_rejects_invalid_initial_status():
+    """Test submit idea enforces SUBMITTED or DRAFT as initial_status."""
+    service = MockIdeaService()
+    app.dependency_overrides[get_current_user] = (
+        lambda: CurrentUser(email="owner.user@epam.com", role=UserRole.SUBMITTER)
+    )
+    app.dependency_overrides[get_idea_service] = lambda: service
+
+    try:
+        client = TestClient(app)
+        response = client.post(
+            "/ideas",
+            data={
+                "title": "Invalid Status Idea",
+                "description": "Trying to set initial status to accepted.",
+                "category": "Product",
+                "initial_status": "accepted",
+            },
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 201
+    # Should default to SUBMITTED if not SUBMITTED or DRAFT
+    assert response.json()["status"] == IdeaStatus.SUBMITTED.value
+
+
+def test_update_idea_status_with_all_optional_fields():
+    """Test update idea status with comment and score together."""
+    from tests.unit.test_idea_service import InMemoryIdeaRepo
+    from app.services.idea_service import IdeaService
+
+    repo = InMemoryIdeaRepo()
+    repo._ideas = [
+        {
+            "_id": "idea-1",
+            "title": "Test Idea",
+            "description": "Test",
+            "category": "Product",
+            "status": "submitted",
+            "created_by": "owner@epam.com",
+            "created_at": datetime.now(timezone.utc),
+            "attachment_urls": [],
+            "score": None,
+        }
+    ]
+    service = IdeaService(idea_repository=repo)
+    app.dependency_overrides[get_current_user] = (
+        lambda: CurrentUser(email="admin@epam.com", role=UserRole.ADMIN)
+    )
+    app.dependency_overrides[get_idea_service] = lambda: service
+
+    try:
+        client = TestClient(app)
+        response = client.patch(
+            "/ideas/idea-1/status",
+            json={
+                "status": "accepted",
+                "evaluator_comment": "Great work!",
+                "score": 5,
+            },
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "accepted"
+    assert body["evaluator_comment"] == "Great work!"
+    assert body["score"] == 5
