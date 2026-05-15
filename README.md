@@ -92,6 +92,8 @@ npm run build
 ## 📸 User Interface Overview
 
 ### Dashboard Interface
+![Dashboard](docs/screenshots/dashboard.png)
+
 - **All Ideas View**: Unified dashboard displaying all submitted ideas with visual organization
 - **Priority Filtering**: Ideas categorized by priority levels (High/Medium/Low) with real-time counts
 - **Blind Review Toggle**: Enable/disable anonymous evaluation mode to hide creator information
@@ -99,20 +101,28 @@ npm run build
 - **User Welcome**: Personalized greeting with user account information
 
 ### Authentication System
+
 **Login Page**
+![Login](docs/screenshots/login.png)
+
 - Email-based authentication
 - Secure password field
 - JWT token-based session management
 - Account recovery links
 
 **Registration Page**  
+![Register](docs/screenshots/register.png)
+
 - Email input with validation
 - Password creation with strength requirements
 - Role selection dropdown (Submitter/Reviewer/Admin)
 - Account creation button with validation feedback
 
 ### Idea Management Interface
+
 **Submit New Idea**
+![Submit Idea](docs/screenshots/submit-idea.png)
+
 - Title input field (required)
 - Rich description textarea with formatting support
 - Category dropdown (Product/Process/Service)
@@ -122,6 +132,8 @@ npm run build
 - Submit or Save as Draft options
 
 **Draft Idea Card**
+![Draft Idea](docs/screenshots/draft-idea.png)
+
 - Status badge showing "Draft" state
 - Creator and metadata display
 - "Publish Idea" button for publication workflow
@@ -129,7 +141,10 @@ npm run build
 - No Scoring available in draft state
 
 ### Multi-Stage Review Interface
+
 **Review Stages Navigation**
+![Review Stages](docs/screenshots/review-stages.png)
+
 - Visual stage indicators (Stage 1, 2, 3, 4...)
 - Current stage highlighting
 - Progress tracking through evaluation workflow
@@ -142,6 +157,8 @@ npm run build
 - History tracking of all stage transitions
 
 **Blind Review Mode**
+![Blind Review](docs/screenshots/blind-review.png)
+
 - Anonymous idea display (no creator name visible)
 - Leadership Review stage identification
 - Fair evaluation environment
@@ -149,6 +166,8 @@ npm run build
 - Status tracking indicators
 
 **Error & Validation Handling**
+![Validation Error](docs/screenshots/validation-error.png)
+
 - Validation error messages (422 error display)
 - Clear feedback on missing required fields
 - Form constraint guidance

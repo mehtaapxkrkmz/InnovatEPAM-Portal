@@ -1,0 +1,10 @@
+# This file ensures the screenshots directory is tracked by Git
+# Add UI screenshots here:
+# - dashboard.png
+# - login.png
+# - register.png
+# - submit-idea.png
+# - draft-idea.png
+# - review-stages.png
+# - blind-review.png
+# - validation-error.png
