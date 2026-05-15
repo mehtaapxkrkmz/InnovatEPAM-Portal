@@ -38,40 +38,49 @@ uvicorn src.main:app --reload
 pytest
 ```
 
-## User Interface - Screenshots
+## User Interface Overview
 
-### Dashboard
-All ideas displayed in a unified view with priority filtering and blind review mode.
-![Dashboard](docs/screenshots/dashboard.png)
+### Key Features in Action
 
-### Authentication
-#### Login Page
-![Login](docs/screenshots/login.png)
+**Dashboard**
+- All ideas displayed in a unified view with priority filtering
+- Blind review mode toggle for anonymous evaluation
+- Real-time idea counting by priority level
+- Quick access to submit new ideas
 
-#### Register Page
-![Register](docs/screenshots/register.png)
+**Authentication System**
+- User registration with role selection (Submitter, Reviewer, Admin)
+- Secure login with JWT token-based authentication
+- Email-based account management
 
-### Idea Management
-#### Submit New Idea
-Create and submit innovation ideas with attachments, budget estimates, and categorization.
-![Submit Idea](docs/screenshots/submit-idea.png)
+**Idea Management**
+- **Submit New Idea**: Add innovation ideas with:
+  - Title and detailed description
+  - Category selection (Product, Process, Service)
+  - Priority levels (Low, Medium, High)
+  - Budget estimation
+  - File attachments (PDF, images, documents - max 3 files)
+  
+- **Draft Management**: Save ideas as drafts before publishing
+- **Idea Cards**: Display idea metadata with creator info, scoring, and feedback history
 
-#### Draft Idea
-Save ideas as drafts before publishing.
-![Draft Idea](docs/screenshots/draft-idea.png)
+**Multi-Stage Review Process**
+- **Review Workflow**: Sequential or parallel review stages
+  - Stage 1: Initial Review
+  - Stage 2: Business Review
+  - Stage 3: Leadership Review
+  - Stage 4: Final Decision
 
-### Review Process
-#### Review Stages Interface
-Multi-stage review process with status tracking and evaluation scoring.
-![Review Stages](docs/screenshots/review-stages.png)
+- **Evaluation Features**:
+  - Scoring system (1-5 scale)
+  - Structured evaluation comments
+  - Status tracking (Under Review, Accepted, Rejected)
+  - Anonymous evaluation mode for fair assessment
 
-#### Validation Handling
-Error handling and feedback display during review process.
-![Validation](docs/screenshots/validation-error.png)
-
-#### Blind Review Mode
-Review ideas anonymously with blind review mode active.
-![Blind Review](docs/screenshots/blind-review.png)
+- **Error Handling**:
+  - Validation feedback for incomplete submissions
+  - Clear error messages for API issues
+  - Form guidance and constraints
 
 ## Features
 - **Employee Innovation Management**: Submit, track, and manage innovation ideas
