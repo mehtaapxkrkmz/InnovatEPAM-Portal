@@ -92,7 +92,7 @@ npm run build
 ## 📸 User Interface Overview
 
 ### Dashboard Interface
-![Dashboard](docs/screenshots/dashboard.png)
+![Dashboard](docs/screenshots/1.jpg)
 
 - **All Ideas View**: Unified dashboard displaying all submitted ideas with visual organization
 - **Priority Filtering**: Ideas categorized by priority levels (High/Medium/Low) with real-time counts
@@ -103,7 +103,7 @@ npm run build
 ### Authentication System
 
 **Login Page**
-![Login](docs/screenshots/login.png)
+![Login](docs/screenshots/2.jpg)
 
 - Email-based authentication
 - Secure password field
@@ -111,7 +111,7 @@ npm run build
 - Account recovery links
 
 **Registration Page**  
-![Register](docs/screenshots/register.png)
+![Register](docs/screenshots/3.jpg)
 
 - Email input with validation
 - Password creation with strength requirements
@@ -121,7 +121,7 @@ npm run build
 ### Idea Management Interface
 
 **Submit New Idea**
-![Submit Idea](docs/screenshots/submit-idea.png)
+![Submit Idea](docs/screenshots/4.jpg)
 
 - Title input field (required)
 - Rich description textarea with formatting support
@@ -132,7 +132,7 @@ npm run build
 - Submit or Save as Draft options
 
 **Draft Idea Card**
-![Draft Idea](docs/screenshots/draft-idea.png)
+![Draft Idea](docs/screenshots/5.jpg)
 
 - Status badge showing "Draft" state
 - Creator and metadata display
@@ -143,7 +143,7 @@ npm run build
 ### Multi-Stage Review Interface
 
 **Review Stages Navigation**
-![Review Stages](docs/screenshots/review-stages.png)
+![Review Stages](docs/screenshots/6.jpg)
 
 - Visual stage indicators (Stage 1, 2, 3, 4...)
 - Current stage highlighting
@@ -157,7 +157,7 @@ npm run build
 - History tracking of all stage transitions
 
 **Blind Review Mode**
-![Blind Review](docs/screenshots/blind-review.png)
+![Blind Review](docs/screenshots/7.jpg)
 
 - Anonymous idea display (no creator name visible)
 - Leadership Review stage identification
@@ -166,8 +166,6 @@ npm run build
 - Status tracking indicators
 
 **Error & Validation Handling**
-![Validation Error](docs/screenshots/validation-error.png)
-
 - Validation error messages (422 error display)
 - Clear feedback on missing required fields
 - Form constraint guidance
