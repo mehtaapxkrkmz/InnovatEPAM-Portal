@@ -129,7 +129,7 @@ npm run build
 **Submit New Idea**
 
 
-![Submit Idea](docs/screenshots/4.jpg)
+![Submit Idea](docs/screenshots/6.jpg)
 
 - Title input field (required)
 - Rich description textarea with formatting support
@@ -142,7 +142,7 @@ npm run build
 **Draft Idea Card**
 
 
-![Draft Idea](docs/screenshots/5.jpg)
+![Draft Idea](docs/screenshots/7.jpg)
 
 - Status badge showing "Draft" state
 - Creator and metadata display
@@ -155,7 +155,7 @@ npm run build
 **Review Stages Navigation**
 
 
-![Review Stages](docs/screenshots/6.jpg)
+![Review Stages](docs/screenshots/5.jpg)
 
 - Visual stage indicators (Stage 1, 2, 3, 4...)
 - Current stage highlighting
@@ -172,7 +172,7 @@ npm run build
 
 
 
-![Blind Review](docs/screenshots/7.jpg)
+![Blind Review](docs/screenshots/4.jpg)
 
 - Anonymous idea display (no creator name visible)
 - Leadership Review stage identification
